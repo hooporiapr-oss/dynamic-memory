@@ -253,11 +253,11 @@ function showQuarterStats(finalScore){
     var nextQ=QUARTER_SEQUENCE[THIS_QUARTER];
     nextBtn.textContent='NEXT: '+nextQ.label.toUpperCase()+' QUARTER →';
     nextBtn.onclick=function(){window.location.href=nextQ.file};
+    document.getElementById('quarterStatsScreen').style.display='flex';
   }else{
-    nextBtn.textContent='SEE FINAL SCORE →';
-    nextBtn.onclick=function(){window.location.href='dynamic-memory-final-score.html'};
+    sessionStorage.setItem('hoop-fullgame-active','0');
+    window.location.href='dynamic-memory-final-score.html';
   }
-  document.getElementById('quarterStatsScreen').style.display='flex';
 }
 var trainingLevel=1; // 1-5
 var LEVEL_CELLS={1:3,2:4,3:5,4:6,5:7};
