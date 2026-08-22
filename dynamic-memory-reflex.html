@@ -360,7 +360,7 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-$('reflex_menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('reflex_screen-game').style.display='none';$('reflex_screen-intro').style.display='flex'};
+$('reflex_menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();window.location.href='dynamic-memory-hub.html'};
 
 (function(){
   function grabFullscreenOnFirstTap(e){
