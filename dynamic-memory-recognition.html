@@ -386,7 +386,7 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-$('recog_menuBtn').onclick=function(){stopTimer();stopFullStrobe();$('recog_screen-game').style.display='none';$('recog_screen-intro').style.display='flex'};
+$('recog_menuBtn').onclick=function(){stopTimer();stopFullStrobe();window.location.href='dynamic-memory-hub.html'};
 
 (function(){
   function grabFullscreenOnFirstTap(e){
