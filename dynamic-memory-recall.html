@@ -620,14 +620,14 @@ function restartGame(){
 $('actBtn').onclick=startRound;
 buildCourt();
 
-// Reached as part of a tracked Full Game run — the player already
-// named themselves once at the hub, so asking again here would just
-// be a redundant interruption between quarters. Standalone practice
-// (arriving here directly, outside a Full Game run) still asks.
-if(isFullGameActive()){
-  var storedName=sessionStorage.getItem('hoop-player-name');
-  if(storedName)launchGame(storedName);
-}
+// Every visit launches straight into gameplay now — the name-entry
+// screen only ever mattered for the tracked Full Game run (where the
+// real name feeds the standings write), and standalone practice
+// never writes anywhere at all, so there's nothing for a typed name
+// to attribute here. Skipping it removes a genuinely pointless click
+// between the hub and actually playing.
+var storedName=sessionStorage.getItem('hoop-player-name');
+launchGame(storedName||'Player');
 })();
 </script>
 </body>
