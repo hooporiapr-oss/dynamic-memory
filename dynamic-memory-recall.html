@@ -336,7 +336,7 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-$('menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('screen-game').style.display='none';$('screen-intro').style.display='flex'};
+$('menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();window.location.href='dynamic-memory-hub.html'};
 $('seqExitBtn').onclick=function(){window.location.href='dynamic-memory-hub.html';};
 
 (function(){
