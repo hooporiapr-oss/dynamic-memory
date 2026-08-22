@@ -607,12 +607,12 @@ $('reflex_actBtn').onclick=startRound;
 buildCourt();
 $('reflexExitBtn').onclick=function(){window.location.href='dynamic-memory-hub.html';};
 
-// Reached as part of a tracked Full Game run — skip the redundant
-// name re-entry, same reasoning as every other quarter.
-if(isFullGameActive()){
-  var storedName=sessionStorage.getItem('hoop-player-name');
-  if(storedName)launchGame(storedName);
-}
+// Every visit launches straight into gameplay now — the name-entry
+// screen only ever mattered for the tracked Full Game run, and
+// standalone practice never writes anywhere at all, so there's
+// nothing for a typed name to attribute here.
+var storedName=sessionStorage.getItem('hoop-player-name');
+launchGame(storedName||'Player');
 })();
 </script>
 </body>
