@@ -363,7 +363,7 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-$('replay_menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('replay_screen-game').style.display='none';$('replay_screen-intro').style.display='flex'};
+$('replay_menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();window.location.href='dynamic-memory-hub.html'};
 
 (function(){
   function grabFullscreenOnFirstTap(e){
