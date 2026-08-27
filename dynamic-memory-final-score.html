@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+if (sessionStorage.getItem('dynamic-memory-gate-pass') !== '1') {
+  window.location.replace('index.html');
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Final Score — Dynamic Memory</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+html,body{
+  height:100%;
+  overflow:hidden;
+  background:#000;
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
+}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  color:#fff;
+}
+
+#stage{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:radial-gradient(ellipse at center,#140800 0%,#000 70%);
+}
+
+#panel{
+  position:relative;
+  z-index:2;
+  width:100%;
+  max-width:560px;
+  max-height:100%;
+  overflow-y:auto;
+  text-align:center;
+}
+
+.buzzer{
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:#7c3aed;
+  margin-bottom:8px;
+}
+.final-title{
+  font-size:1.8rem;
+  font-weight:900;
+  font-style:italic;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  text-shadow:0 0 40px rgba(255,107,53,.6);
+  margin-bottom:28px;
+}
+.final-title span{color:#FF6B35}
+
+.qs-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-bottom:24px}
+.qs-cell{border-radius:14px;border:2px solid rgba(255,107,53,.35);background:rgba(255,107,53,.06);padding:18px 6px}
+.qs-label{font-size:.62rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#ffd35a;margin-bottom:6px}
+.qs-val{font-size:1.7rem;font-weight:900;color:#fff}
+
+.total-row{
+  border-radius:20px;
+  border:2px solid rgba(124,58,237,.5);
+  background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(255,255,255,.03));
+  padding:24px;
+  margin-bottom:28px;
+  box-shadow:0 0 50px rgba(124,58,237,.35);
+}
+.total-label{font-size:.72rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#a78bfa;margin-bottom:6px}
+.total-val{font-size:3.2rem;font-weight:900;color:#fff;text-shadow:0 0 30px rgba(124,58,237,.7)}
+
+.action-btn{
+  display:block;
+  width:100%;
+  height:60px;
+  border:none;
+  border-radius:18px;
+  font-size:1rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:14px;
+}
+.action-btn:active{transform:scale(.98)}
+.action-btn.primary{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 0 40px rgba(124,58,237,.6)}
+.action-btn.secondary{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.25)}
+
+footer{margin-top:16px;font-size:.68rem;color:#6b5d52;letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="panel">
+    <div class="buzzer">🔔 Final Buzzer</div>
+    <div class="final-title">GAME <span>COMPLETE</span></div>
+
+    <div class="qs-board">
+      <div class="qs-cell"><div class="qs-label">Recall</div><div class="qs-val" id="fsQ1">0</div></div>
+      <div class="qs-cell"><div class="qs-label">Reflex</div><div class="qs-val" id="fsQ2">0</div></div>
+      <div class="qs-cell"><div class="qs-label">Replay</div><div class="qs-val" id="fsQ3">0</div></div>
+      <div class="qs-cell"><div class="qs-label">Recognition</div><div class="qs-val" id="fsQ4">0</div></div>
+    </div>
+
+    <div class="total-row">
+      <div class="total-label">Final Score</div>
+      <div class="total-val" id="fsTotal">0</div>
+    </div>
+
+    <div id="standingsStatus" style="font-size:.78rem;font-weight:700;letter-spacing:.04em;color:#8892a0;margin:-10px 0 20px">Saving to standings…</div>
+
+    <button class="action-btn primary" id="playAgainBtn">🏀 PLAY AGAIN</button>
+    <a class="action-btn secondary" href="dynamic-memory-standings.html">🏆 View Standings</a>
+    <a class="action-btn secondary" href="dynamic-hub.html">← Back to the Arena</a>
+
+    <footer>Gostar Digital LLC</footer>
+  </div>
+</div>
+
+<script>
+(function(){
+function loadQuarterScores(){
+  try{return JSON.parse(sessionStorage.getItem('hoop-quarter-scores')||'{"q1":0,"q2":0,"q3":0,"q4":0}')}
+  catch(e){return {q1:0,q2:0,q3:0,q4:0}}
+}
+var scores=loadQuarterScores();
+var total=scores.q1+scores.q2+scores.q3+scores.q4;
+document.getElementById('fsQ1').textContent=scores.q1;
+document.getElementById('fsQ2').textContent=scores.q2;
+document.getElementById('fsQ3').textContent=scores.q3;
+document.getElementById('fsQ4').textContent=scores.q4;
+document.getElementById('fsTotal').textContent=total;
+
+document.getElementById('playAgainBtn').addEventListener('click',function(){
+  sessionStorage.setItem('hoop-fullgame-active','1');
+  sessionStorage.setItem('hoop-quarter-scores',JSON.stringify({q1:0,q2:0,q3:0,q4:0}));
+  window.location.href='dynamic-memory-recall.html';
+});
+
+// ══════════════════════════════════════════════════════
+//  STANDINGS — one single board for the whole Full Game run, not
+//  per-quarter. Written exactly once, here, the moment a run
+//  genuinely completes — none of the four individual quarter games
+//  write anything themselves anymore. Ranking is by total score
+//  across all four quarters, not any single quarter's result.
+//
+//  The save status is shown directly on screen (#standingsStatus)
+//  rather than only in the console — a silent failure here is
+//  useless for actually diagnosing anything, so success or failure
+//  is visible without needing dev tools open at all.
+// ══════════════════════════════════════════════════════
+var SUPABASE_URL='https://sdaphocueugzfvjovuxd.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var SB_TABLE='hooporia_4qtr_standings';
+var statusEl=document.getElementById('standingsStatus');
+
+// Defensive coercion — if any quarter score ever came through as
+// something other than a clean number (missing key, stray string,
+// NaN), sending that straight to an integer NOT NULL column would
+// get the whole insert rejected. Better to normalize to 0 here than
+// let one bad field silently kill the entire write.
+function toInt(v){ var n=Number(v); return isFinite(n) ? Math.round(n) : 0; }
+var payload={
+  player_name:(sessionStorage.getItem('hoop-player-name')||'Player').slice(0,40),
+  q1_score:toInt(scores.q1),
+  q2_score:toInt(scores.q2),
+  q3_score:toInt(scores.q3),
+  q4_score:toInt(scores.q4),
+  total_score:toInt(total),
+  school_name:sessionStorage.getItem('hoop-school')||null
+};
+
+saveToStandings(payload);
+
+async function saveToStandings(payload){
+  try{
+    var res=await fetch(SUPABASE_URL+'/rest/v1/'+SB_TABLE,{
+      method:'POST',
+      headers:{
+        'apikey':SUPABASE_ANON_KEY,
+        'Authorization':'Bearer '+SUPABASE_ANON_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'return=minimal'
+      },
+      body:JSON.stringify(payload)
+    });
+    // fetch() only rejects on genuine network failure (offline, DNS,
+    // CORS blocked entirely) — it does NOT reject on an HTTP error
+    // status. A rejected RLS policy or a validation error comes back
+    // as a normal, resolved response with res.ok === false, so that
+    // has to be checked explicitly or a real server-side failure is
+    // completely invisible.
+    if(res.ok){
+      statusEl.textContent='✓ Saved to standings';
+      statusEl.style.color='#00D9A5';
+    }else{
+      var bodyText=await res.text().catch(function(){return ''});
+      console.error('Dynamic Memory standings write failed:',res.status,bodyText);
+      statusEl.textContent='⚠ Couldn\'t save (error '+res.status+') — score still stands above, just not on the board';
+      statusEl.style.color='#FF6B35';
+    }
+  }catch(e){
+    console.error('Dynamic Memory standings write — network error:',e);
+    statusEl.textContent='⚠ Couldn\'t reach the standings server — score still stands above, just not on the board';
+    statusEl.style.color='#FF6B35';
+  }
+}
+})();
+</script>
+</body>
+</html>
