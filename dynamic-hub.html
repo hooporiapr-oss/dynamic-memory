@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+if (sessionStorage.getItem('dynamic-memory-gate-pass') !== '1') {
+  window.location.replace('index.html');
+}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Dynamic Memory · Training Modes</title>
@@ -214,8 +219,9 @@ footer{
 
 <div id="screen-name-entry">
   <div class="name-entry-title">WHO'S <span>PLAYING?</span></div>
-  <div class="name-entry-sub">Enter your name to take the court. Your final score gets tracked on the standings — every player competing for the same board.</div>
+  <div class="name-entry-sub">Enter your name and school to take the court. Your final score gets tracked on your school's own standings board.</div>
   <input type="text" id="playerNameInput" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
+  <input type="text" id="playerSchoolInput" class="name-input" maxlength="40" placeholder="Your school" autocomplete="off" style="margin-top:10px">
   <button class="fullgame-btn" id="nameContinueBtn" style="max-width:400px">▶ Continue</button>
   <a href="dynamic-memory-standings-index.html" class="back-btn" style="margin-top:6px">🏆 View Standings</a>
 </div>
