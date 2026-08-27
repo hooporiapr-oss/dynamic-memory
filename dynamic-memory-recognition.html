@@ -393,7 +393,7 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-$('recog_menuBtn').onclick=function(){stopTimer();stopFullStrobe();window.location.href='dynamic-memory-hub.html'};
+$('recog_menuBtn').onclick=function(){stopTimer();stopFullStrobe();window.location.href='dynamic-hub.html'};
 
 var cells=[];
 function buildCourt(){var court=$('recog_court');court.innerHTML='';cells=[];for(var i=0;i<32;i++){var c=document.createElement('div');c.className='rcg-cell';c.dataset.i=i;c.addEventListener('pointerdown',(function(idx){return function(e){e.preventDefault();handleTap(idx)}})(i));court.appendChild(c);cells.push(c)}}
