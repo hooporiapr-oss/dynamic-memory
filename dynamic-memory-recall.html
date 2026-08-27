@@ -341,8 +341,16 @@ function resizeCourtToFit(){
 }
 window.addEventListener('resize',resizeCourtToFit);
 
-$('menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();window.location.href='dynamic-memory-hub.html'};
-$('seqExitBtn').onclick=function(){window.location.href='dynamic-memory-hub.html';};
+$('menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();window.location.href='index.html'};
+$('seqExitBtn').onclick=function(){window.location.href='index.html';};
+
+(function(){
+  function grabFullscreenOnFirstTap(e){
+    try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(err){}
+    document.removeEventListener('pointerdown',grabFullscreenOnFirstTap,true);
+  }
+  document.addEventListener('pointerdown',grabFullscreenOnFirstTap,true);
+})();
 
 var cells=[];
 function buildCourt(){var court=$('court');court.innerHTML='';cells=[];for(var i=0;i<50;i++){var c=document.createElement('div');c.className='cell';c.dataset.i=i;c.addEventListener('pointerdown',(function(idx){return function(e){e.preventDefault();handleTap(idx)}})(i));court.appendChild(c);cells.push(c)}}
