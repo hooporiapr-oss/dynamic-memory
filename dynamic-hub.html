@@ -213,6 +213,11 @@ footer{
 
     <button class="fullgame-btn" id="fullGameBtn">🏀 PLAY THE FULL GAME</button>
 
+    <a href="dynamic-memory-standings.html" style="margin:0 auto 12px;padding:12px 18px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;max-width:400px">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1.5px;color:#c9a3fa">🏆 View Standings</span>
+    </a>
+    <button id="switchCodeBtn" style="margin:0 auto 18px;padding:10px 16px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;display:block">🔄 Switch School / Enter New Code</button>
+
     <footer>Gostar Digital LLC</footer>
   </div>
 </div>
@@ -241,6 +246,20 @@ soundBtn.addEventListener('click',function(e){
 // silently letting a stale session back in.
 document.getElementById('exitHubBtn').addEventListener('click',function(){
   sessionStorage.removeItem('dynamic-memory-gate-pass');
+  window.location.href='index.html';
+});
+
+// The device unlock is otherwise permanent by design (enter a code
+// once, never asked again) — this is the one, visible way to
+// deliberately back out of that and enter a different code, without
+// needing any browser/settings knowledge at all. A confirm dialog
+// guards against an accidental tap locking someone out of the game
+// with no new code in hand yet.
+document.getElementById('switchCodeBtn').addEventListener('click',function(){
+  if(!confirm('Switch to a new school or code? You\'ll need a new access code to get back in.'))return;
+  sessionStorage.removeItem('dynamic-memory-gate-pass');
+  sessionStorage.removeItem('hoop-license');
+  sessionStorage.removeItem('hoop-school');
   window.location.href='index.html';
 });
 
