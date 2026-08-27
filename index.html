@@ -2,279 +2,129 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Dynamic Memory · Training Modes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hooporia · Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
+:root{--purple:#7c3aed;--purple-deep:#5b21b6;--orange:#f37418;--dark:#0a0a0f;--text:#fff;--muted:#8892a0}
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overflow:hidden}
 
-/* Fixed to the viewport rather than height:100vh — 100vh recalculates
-   whenever a mobile/VR browser's UI chrome shows or hides, and reacting
-   to that recalculation is what causes a page to drift on its own.
-   Fixed positioning removes the dependency entirely. */
-html,body{
-  height:100%;
-  overflow:hidden;
-  background:#000;
-  user-select:none;-webkit-user-select:none;
-  touch-action:manipulation;
-}
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  color:#fff;
-}
+#center{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,#1a0f2e 0%,#000 70%)}
 
-/* True black, not a dark gradient — same solid background as every
-   other page in this flow, on desktop or in a VR headset. */
-#stage{
-  position:fixed;
-  inset:0;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-  background:#000;
-}
+.gate-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:.03em;text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(124,58,237,.5)}
+.gate-title span{color:var(--purple)}
+.gate-sub{font-size:.85rem;color:var(--muted);margin-bottom:40px}
 
-#panel{
-  position:relative;
-  z-index:2;
-  width:100%;
-  max-width:820px;
-  max-height:100%;
-  overflow-y:auto;
-  text-align:center;
-}
+.code-panel{width:100%;max-width:340px}
+.code-label{font-size:.68rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.code-input{width:100%;padding:16px;border-radius:10px;border:2px solid rgba(124,58,237,.4);background:rgba(255,255,255,.06);color:#fff;font-size:1.5rem;font-weight:900;letter-spacing:.3em;text-transform:uppercase;text-align:center;font-family:'Courier New',monospace}
+.code-input:focus{outline:none;border-color:var(--purple);box-shadow:0 0 24px rgba(124,58,237,.35)}
+.code-input.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 
-.back-btn{
-  display:inline-block;
-  padding:10px 20px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.25);
-  background:rgba(0,0,0,.5);
-  color:#fff;
-  font-size:.78rem;
-  font-weight:900;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  text-decoration:none;
-  margin-bottom:20px;
-}
-.back-btn:active{transform:scale(.98)}
+.enter-btn{width:100%;margin-top:16px;padding:15px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--purple),var(--purple-deep));color:#fff;font-size:.9rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.enter-btn:active{transform:scale(.98)}
+.err{margin-top:14px;color:#ff8888;font-size:.82rem;font-weight:700;min-height:18px}
 
-.subtitle{
-  font-size:1.25rem;
-  font-weight:700;
-  color:#c9b8a8;
-  margin-bottom:24px;
-  letter-spacing:.03em;
-}
+.brandmark{margin-top:44px;font-size:.68rem;font-weight:900;letter-spacing:.3em;text-transform:uppercase;color:#4a5058}
+.brandmark b{color:var(--muted);font-style:italic}
 
-.arena-title{
-  font-size:1.6rem;
-  font-weight:900;
-  font-style:italic;
-  letter-spacing:.03em;
-  text-transform:uppercase;
-  margin:28px 0 2px;
-  text-shadow:0 0 30px rgba(243,116,24,.4);
-}
-.arena-title span{color:#f37418}
-.arena-sub{
-  font-size:.72rem;
-  font-weight:900;
-  letter-spacing:.24em;
-  text-transform:uppercase;
-  color:#7c3aed;
-  margin-bottom:18px;
-}
-.fullgame-btn{
-  display:block;
-  width:100%;
-  max-width:440px;
-  margin:0 auto 26px;
-  padding:16px 20px;
-  border:none;
-  border-radius:16px;
-  background:linear-gradient(135deg,#7c3aed,#a855f7);
-  color:#fff;
-  font-size:.95rem;
-  font-weight:900;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  cursor:pointer;
-  box-shadow:0 0 40px rgba(124,58,237,.6);
-}
-.fullgame-btn:active{transform:scale(.98)}
-
-/* Individual quarter cards — standalone practice for any one of the
-   4 games, sitting above the full-game button so a player can drill
-   a specific quarter before (or instead of) running the whole chain. */
-.quarters-label{
-  font-size:.68rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;
-  color:#7d7268;margin-bottom:12px;
-}
-.quarter-grid{
-  display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
-  max-width:640px;margin:0 auto 22px;
-}
-.quarter-card{
-  display:block;text-decoration:none;padding:14px 12px;border-radius:14px;
-  border:1.5px solid rgba(124,58,237,.35);background:rgba(124,58,237,.08);
-  text-align:left;transition:background .12s,border-color .12s,transform .08s;
-}
-.quarter-card:active{transform:scale(.97);background:rgba(124,58,237,.16)}
-.quarter-num{
-  font-size:.62rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
-  color:#a855f7;margin-bottom:4px;
-}
-.quarter-name{
-  font-size:.98rem;font-weight:900;font-style:italic;letter-spacing:.01em;
-  text-transform:uppercase;color:#fff;margin-bottom:4px;line-height:1.1;
-}
-.quarter-desc{font-size:.66rem;color:#c9b8a8;line-height:1.35}
-
-footer{
-  margin-top:24px;
-  font-size:.72rem;
-  color:#6b5d52;
-  letter-spacing:.02em;
-}
-
-#soundToggle{
-  position:fixed;top:14px;right:14px;z-index:30;width:42px;height:42px;border-radius:50%;
-  border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:1rem;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);
-}
-#exitHubBtn{
-  position:fixed;top:14px;left:14px;z-index:30;padding:8px 16px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:.78rem;
-  font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(4px);
-}
-
-/* Name entry — required before every full-game run, since the
-   standings on the final score screen only mean something if every
-   entry is honestly attributed to a real player. */
-#screen-name-entry{
-  position:fixed;inset:0;z-index:50;display:none;flex-direction:column;
-  align-items:center;justify-content:center;background:#000;padding:24px;text-align:center;
-}
-.name-entry-title{
-  font-size:1.5rem;font-weight:900;font-style:italic;letter-spacing:.03em;
-  text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(124,58,237,.6);
-}
-.name-entry-title span{color:#7c3aed}
-.name-entry-sub{font-size:.85rem;color:#c9b8a8;line-height:1.5;max-width:400px;margin-bottom:26px}
-.name-input{
-  width:100%;max-width:400px;padding:16px;border-radius:14px;border:2px solid rgba(124,58,237,.4);
-  background:rgba(255,255,255,.06);color:#fff;font-size:1.2rem;font-weight:900;
-  letter-spacing:.02em;text-align:center;font-family:Arial,sans-serif;margin-bottom:16px;
-}
-.name-input:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 24px rgba(124,58,237,.35)}
+@media(max-width:480px){.gate-title{font-size:1.8rem}}
 </style>
 </head>
 <body>
-<button id="soundToggle" aria-label="Toggle sound" title="Toggle beat sound">🔊</button>
-<button id="exitHubBtn" type="button">Exit →</button>
 
-<div id="stage">
-  <div id="panel">
-    <div class="arena-title">DYNAMIC <span>MEMORY</span></div>
-    <div class="arena-sub">Memory-Based Basketball Challenges</div>
+<div id="center">
+  <div class="gate-title">HOOP<span>ORIA</span></div>
+  <div class="gate-sub">Memory-Based Basketball Challenges</div>
 
-    <div class="quarters-label">Practice A Single Quarter</div>
-    <div class="quarter-grid">
-      <a class="quarter-card" href="dynamic-memory-recall.html">
-        <div class="quarter-num">Q1</div>
-        <div class="quarter-name">Recall</div>
-        <div class="quarter-desc">Remember the sequence, then repeat it back.</div>
-      </a>
-      <a class="quarter-card" href="dynamic-memory-reflex.html">
-        <div class="quarter-num">Q2</div>
-        <div class="quarter-name">Reflex</div>
-        <div class="quarter-desc">React fast — the shot clock isn't waiting.</div>
-      </a>
-      <a class="quarter-card" href="dynamic-memory-replay.html">
-        <div class="quarter-num">Q3</div>
-        <div class="quarter-name">Replay</div>
-        <div class="quarter-desc">Watch the sequence — ask for a replay if you need it, but every replay costs you points.</div>
-      </a>
-      <a class="quarter-card" href="dynamic-memory-recognition.html">
-        <div class="quarter-num">Q4</div>
-        <div class="quarter-name">Recognition</div>
-        <div class="quarter-desc">Watch the original pattern, then recognize it again in the echo that follows.</div>
-      </a>
-    </div>
-
-    <button class="fullgame-btn" id="fullGameBtn">🏀 PLAY THE FULL GAME</button>
-
-    <footer>Gostar Digital LLC</footer>
+  <div class="code-panel">
+    <div class="code-label">Access Code</div>
+    <input class="code-input" id="gate-code" maxlength="12" placeholder="• • • •" autocomplete="off" onkeydown="if(event.key==='Enter')tryEnter()">
+    <button class="enter-btn" onclick="tryEnter()">Enter Hooporia →</button>
+    <div class="err" id="gate-err"></div>
   </div>
+
+  <div class="brandmark">Powered by <b>Gostar Digital</b></div>
 </div>
 
-<div id="screen-name-entry">
-  <div class="name-entry-title">WHO'S <span>PLAYING?</span></div>
-  <div class="name-entry-sub">Enter your name to take the court. Your final score gets tracked on the standings — every player competing for the same board.</div>
-  <input type="text" id="playerNameInput" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
-  <button class="fullgame-btn" id="nameContinueBtn" style="max-width:400px">▶ Continue</button>
-  <a href="dynamic-memory-standings-index.html" class="back-btn" style="margin-top:6px">🏆 View Standings</a>
-</div>
 <script>
-(function(){
-var soundBtn=document.getElementById('soundToggle');
-var muted=false;
+var $=function(id){return document.getElementById(id)};
 
-soundBtn.addEventListener('click',function(e){
-  e.stopPropagation();
-  muted=!muted;
-  soundBtn.textContent=muted?'🔇':'🔊';
-  soundBtn.style.opacity=muted?'.55':'1';
-});
+// ══════════════════════════════════════════════════════
+//  LICENSE SYSTEM — this is its own separate repo, distinct
+//  from every other product's own domain. To issue / expire /
+//  revoke codes, use admin.html → the Hooporia tab.
+//
+//  This gate is scoped to product='hooporia' — a code issued
+//  for any other product will NOT unlock this gate, and a
+//  Hooporia code won't unlock those, even though all of them
+//  live in the same Supabase licenses table.
+//
+//  The school name captured here travels with the player from
+//  this point forward via sessionStorage — every game they play
+//  and the standings board itself both read it back from here,
+//  rather than each needing its own separate login of its own.
+// ══════════════════════════════════════════════════════
+var SUPABASE_URL = 'https://sdaphocueugzfvjovuxd.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var PRODUCT = 'hooporia';
+// ══════════════════════════════════════════════════════
 
-// Exits the product entirely — clears the gate pass so the next
-// visit genuinely requires the access code again, rather than
-// silently letting a stale session back in.
-document.getElementById('exitHubBtn').addEventListener('click',function(){
-  sessionStorage.removeItem('dynamic-memory-gate-pass');
-  window.location.href='index.html';
-});
-
-// Starts a real, tracked four-quarter run — a fresh scoreboard, and a
-// flag each quarter game checks for on its own end screen. Standalone
-// play (clicking straight into any single quarter from this page)
-// never sets this, so nothing changes for solo practice.
-function showNameEntry(){
-  document.getElementById('stage').style.display='none';
-  document.getElementById('screen-name-entry').style.display='flex';
-  setTimeout(function(){document.getElementById('playerNameInput').focus()},50);
-}
-document.getElementById('fullGameBtn').addEventListener('click',showNameEntry);
-
-// Reached from another game's own "Full Game" switcher slot — skips
-// the hub view entirely and goes straight to naming a player, the
-// same starting point every other switcher slot already lands on.
-if(new URLSearchParams(window.location.search).get('fullgame')==='1'){
-  showNameEntry();
+if (sessionStorage.getItem('dynamic-memory-gate-pass') === '1') {
+  window.location.replace('dynamic-hub.html');
 }
 
-document.getElementById('nameContinueBtn').addEventListener('click',function(){
-  var name=document.getElementById('playerNameInput').value.trim();
-  if(!name){
-    var input=document.getElementById('playerNameInput');
-    input.focus();
-    input.style.borderColor='#ff1e3c';
-    setTimeout(function(){input.style.borderColor=''},600);
-    return;
-  }
-  sessionStorage.setItem('hoop-player-name',name.slice(0,20));
-  sessionStorage.setItem('hoop-fullgame-active','1');
-  sessionStorage.setItem('hoop-quarter-scores',JSON.stringify({q1:0,q2:0,q3:0,q4:0}));
-  window.location.href='dynamic-memory-recall.html';
-});
-document.getElementById('playerNameInput').addEventListener('keydown',function(e){
-  if(e.key==='Enter')document.getElementById('nameContinueBtn').click();
-});
-})();
+function tryEnter(){
+  var input = $('gate-code').value.trim();
+  if (!input){ return; }
+  $('gate-err').style.color = '';
+  $('gate-err').textContent = 'Checking…';
+
+  var url = SUPABASE_URL + '/rest/v1/licenses'
+    + '?select=code,expires_at,active,product,school_name'
+    + '&code=ilike.' + encodeURIComponent(input)
+    + '&active=eq.true'
+    + '&product=eq.' + PRODUCT;
+
+  fetch(url, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+    }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(rows){
+    var lic = (rows && rows.length) ? rows[0] : null;
+
+    if (!lic){ return reject('Invalid code — check with your administrator'); }
+
+    if (lic.expires_at){
+      var exp = new Date(lic.expires_at + 'T23:59:59');
+      if (new Date() > exp){ return reject('This license has expired'); }
+    }
+
+    sessionStorage.setItem('dynamic-memory-gate-pass','1');
+    sessionStorage.setItem('hoop-license', input.toUpperCase());
+    sessionStorage.setItem('hoop-school', lic.school_name || '');
+    window.location.href = 'dynamic-hub.html';
+  })
+  .catch(function(){
+    reject('Connection problem — please try again');
+  });
+}
+
+function reject(msg){
+  $('gate-err').style.color = '#ff8888';
+  $('gate-err').textContent = msg;
+  var box = $('gate-code');
+  box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+  box.value=''; box.focus();
+}
+
+$('gate-code').focus();
 </script>
 </body>
 </html>
