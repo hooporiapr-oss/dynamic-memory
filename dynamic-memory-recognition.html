@@ -432,7 +432,7 @@ function genPatterns(){
   changePos=Math.floor(Math.random()*len);
   originalCell=indices[changePos];
   var used=indices.slice(),newCell;
-  do{newCell=Math.floor(Math.random()*50)}while(used.indexOf(newCell)!==-1);
+  do{newCell=Math.floor(Math.random()*32)}while(used.indexOf(newCell)!==-1);
   echo[changePos]=newCell;changedCell=newCell;
 }
 
