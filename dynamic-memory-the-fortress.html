@@ -347,7 +347,7 @@ function buildBoard(){
   targetEls=[];
   var positions=shuffle(LAYOUT);
   var colors=shuffle(TARGET_COLORS);
-  var size=Math.max(46,Math.min(78,court.width*.14));
+  var size=Math.max(64,Math.min(104,court.width*.19));
   for(var i=0;i<NUM_TARGETS;i++){
     var el=document.createElement('div');
     el.className='fortress-ball';
