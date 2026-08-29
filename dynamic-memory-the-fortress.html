@@ -427,6 +427,12 @@ $('playerNameInputMain').addEventListener('keydown',function(e){
 });
 
 loadBest();
+
+// Reached with ?standings=1 (e.g. a direct "View Standings" link from
+// the hub) — skip straight to the board instead of the start screen.
+if(new URLSearchParams(window.location.search).get('standings')==='1'){
+  openStandings('screen-intro');
+}
 </script>
 </body>
 </html>
