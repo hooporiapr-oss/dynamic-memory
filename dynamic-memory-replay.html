@@ -174,6 +174,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <div class="rby-court-area"><div class="rby-court" id="replay_court"></div></div>
   <div class="rby-bottombar">
     <button class="rby-bot-btn" id="replay_menuBtn">← Home<span>Settings</span></button>
+    <button class="rby-bot-btn" id="replay_fsBtn">⛶ Full<span>Screen</span></button>
     <button class="rby-bot-btn rby-start-btn" id="replay_actBtn">LET'S GO</button>
     <button class="rby-bot-btn rby-repeat-btn" id="replay_repeatBtn">↻ REPEAT<span>2 per round</span></button>
     <button class="rby-bot-btn" id="replay_restartBtn" style="display:none;visibility:hidden;pointer-events:none;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8892a0;font-size:.8rem" onclick="restartGame()">↺ Restart<span style="color:#555">Level 1</span></button>
@@ -369,6 +370,8 @@ function resizeCourtToFit(){
 window.addEventListener('resize',resizeCourtToFit);
 
 $('replay_menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();window.location.href='dynamic-hub.html'};
+var replayFsBtn=$('replay_fsBtn');
+if(replayFsBtn)replayFsBtn.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
 
 var cells=[];
 function buildCourt(){var court=$('replay_court');court.innerHTML='';cells=[];for(var i=0;i<32;i++){var c=document.createElement('div');c.className='rby-cell';c.dataset.i=i;c.addEventListener('pointerdown',(function(idx){return function(e){e.preventDefault();handleTap(idx)}})(i));court.appendChild(c);cells.push(c)}}
