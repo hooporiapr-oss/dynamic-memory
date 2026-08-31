@@ -229,7 +229,7 @@ function recordScoreToStandings(name,q1,q2,q3,q4,total){
   return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,q1_score:q1,q2_score:q2,q3_score:q3,q4_score:q4,total_score:total})
+    body:JSON.stringify({player_name:name,q1_score:q1,q2_score:q2,q3_score:q3,q4_score:q4,total_score:total,school_name:sessionStorage.getItem('hoop-school')||null})
   }).catch(function(){});
 }
 function fetchStandings(){
