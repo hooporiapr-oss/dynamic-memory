@@ -179,6 +179,17 @@ footer{
   font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(4px);
 }
 
+/* Reaction Velocity — a direct link across to the platform's sibling
+   product. Right corner, below the sound toggle — separate from
+   Exit on the left, since this is a cross-product link, not a
+   same-product session action. */
+#reactionVelocityTab{
+  position:fixed;top:66px;right:14px;z-index:30;padding:8px 14px;border-radius:999px;
+  border:1px solid rgba(255,107,53,.5);background:rgba(255,107,53,.15);color:#fff;font-size:.72rem;
+  font-weight:900;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(4px);text-decoration:none;
+  display:inline-block;
+}
+
 /* Name entry — required before every full-game run, since the
    standings on the final score screen only mean something if every
    entry is honestly attributed to a real player. */
@@ -203,6 +214,7 @@ footer{
 <body>
 <button id="soundToggle" aria-label="Toggle sound" title="Toggle beat sound">🔊</button>
 <button id="exitHubBtn" type="button">Exit →</button>
+<a id="reactionVelocityTab" href="https://hooporia.com">⚡ Reaction Velocity</a>
 
 <div id="stage">
   <div id="panel">
@@ -325,7 +337,24 @@ document.getElementById('nameContinueBtn').addEventListener('click',function(){
   sessionStorage.setItem('hoop-player-name',name.slice(0,20));
   sessionStorage.setItem('hoop-fullgame-active','1');
   sessionStorage.setItem('hoop-quarter-scores',JSON.stringify({q1:0,q2:0,q3:0,q4:0}));
-  window.location.href='dynamic-memory-recall.html';
+
+  // Requested here — the last genuine, direct user click before
+  // quarter 1 — so fullscreen starts right as the player commits to
+  // the full game, then persists automatically across all four
+  // quarters' own page navigations (each game's own launchGame()
+  // checks !document.fullscreenElement first, so it's a safe no-op
+  // once already in fullscreen). Navigation is genuinely held until
+  // the fullscreen promise settles (success or failure) — firing it
+  // and immediately navigating away in the same tick can cut the
+  // transition off before the browser finishes it.
+  var goToQ1=function(){window.location.href='dynamic-memory-recall.html'};
+  try{
+    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().then(goToQ1).catch(goToQ1);
+    }else{
+      goToQ1();
+    }
+  }catch(e){goToQ1()}
 });
 document.getElementById('playerNameInput').addEventListener('keydown',function(e){
   if(e.key==='Enter')document.getElementById('nameContinueBtn').click();
