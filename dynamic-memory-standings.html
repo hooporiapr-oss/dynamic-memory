@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-if (sessionStorage.getItem('dynamic-memory-standings-gate-pass') !== '1') {
-  window.location.replace('index.html');
-}
-</script>
+<!-- Deliberately no gate-check here — standings is a public, read-only
+     scoreboard, not gameplay, so it opens directly without requiring
+     an access code. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DYNAMIC MEMORY — STANDINGS</title>
@@ -74,7 +72,7 @@ var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var SB_TABLE='hooporia_4qtr_standings';
 
 function fetchStandings(){
-  var school=sessionStorage.getItem('dynamic-memory-standings-school')||'';
+  var school=sessionStorage.getItem('hoop-school')||'';
   var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,q1_score,q2_score,q3_score,q4_score,total_score&order=total_score.desc&school_name=eq.'+encodeURIComponent(school);
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
@@ -131,12 +129,11 @@ function renderStandings(){
   });
 }
 
-var schoolName=sessionStorage.getItem('dynamic-memory-standings-school');
+var schoolName=sessionStorage.getItem('hoop-school');
 if(schoolName){document.getElementById('boxSub').textContent=schoolName+' · Best Total Score Per Player';}
 renderStandings();
 document.getElementById('refreshBtn').addEventListener('click', renderStandings);
 document.getElementById('exitBtn').addEventListener('click', function(){
-  sessionStorage.removeItem('dynamic-memory-standings-gate-pass');
   window.location.href = 'dynamic-hub.html';
 });
 setInterval(renderStandings, 30000);
