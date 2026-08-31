@@ -165,7 +165,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <div class="rby-top-box"><div class="rby-top-label" id="replay_hRdLbl">Sequence</div><div class="rby-top-val" id="replay_hRd">3</div></div>
     <div class="rby-top-box"><div class="rby-top-label" id="replay_hLvLbl">Best</div><div class="rby-top-val" id="replay_hLv">0</div></div>
     <div class="rby-top-box"><div class="rby-top-label">Streak</div><div class="rby-top-val" id="replay_hSt">0</div></div>
-    <div class="rby-top-box"><div class="rby-top-label">Repeats Left</div><div class="rby-top-val" id="replay_hAtt">2</div></div>
     <div class="rby-top-box"><div class="rby-top-label">Timer</div><div class="rby-top-val" id="replay_hTr">--</div></div>
   </div>
   <div class="rby-clockbar"><div class="rby-clockbar-fill" id="replay_clockFill" style="width:0%"></div></div>
@@ -176,7 +175,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <button class="rby-bot-btn" id="replay_menuBtn">← Home<span>Settings</span></button>
     <button class="rby-bot-btn" id="replay_fsBtn">⛶ Full<span>Screen</span></button>
     <button class="rby-bot-btn rby-start-btn" id="replay_actBtn">LET'S GO</button>
-    <button class="rby-bot-btn rby-repeat-btn" id="replay_repeatBtn">↻ REPEAT<span>2 per round</span></button>
     <button class="rby-bot-btn" id="replay_restartBtn" style="display:none;visibility:hidden;pointer-events:none;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8892a0;font-size:.8rem" onclick="restartGame()">↺ Restart<span style="color:#555">Level 1</span></button>
   </div>
 </div>
@@ -332,11 +330,6 @@ function launchGame(nm){
   g.cellCount=getInitialCellCount();g.roundsDone=0;
   buildCourt();updateHUD();
   resizeCourtToFit();
-  // The "Repeats Left" box only means anything when a repeat is
-  // actually offered — during the Full Game that never happens, so
-  // showing a counter that can only ever read 2 would be misleading.
-  var repeatsBox=$('replay_hAtt').closest('.rby-top-box');
-  if(repeatsBox)repeatsBox.style.visibility=isFullGameActive()?'hidden':'visible';
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 $('replay_startBtn').onclick=function(){
@@ -394,7 +387,6 @@ function updateHUD(){
     $('replay_hLv').textContent=g.best;
   }
   $('replay_hSt').textContent=g.streak;
-  $('replay_hAtt').textContent=Math.max(0,2-repeatOfferNum);
   $('replay_ps1').textContent=g.cellCount;
 }
 function msg(txt,cls){var el=$('replay_msg');el.textContent=txt;el.className='rby-msg-bar '+(cls||'rby-watch')}
@@ -433,54 +425,13 @@ function revealSequence(cb){
   next();
 }
 
-// A wrong tap normally opens a timed window where the player must
-// actively click REPEAT to get another chance (up to two per round,
-// at a reduced point value). During the tracked Full Game, that
-// safety net is removed entirely — a miss ends the quarter right
-// away, same as every other quarter in that run. Standalone practice
-// keeps the original repeat behavior unchanged, since it's the
-// defining mechanic of this game on its own.
+// A wrong tap now genuinely ends the game outright — these are
+// practice/how-to-play rounds, not a scored run with retries, so a
+// miss goes straight to the final-score screen and back to the hub.
 function handleFailure(wrongIdx){
   if(wrongIdx!==null)cellSt(wrongIdx,'rby-wrong');
-  if(!isFullGameActive() && repeatOfferNum<2){
-    repeatOfferNum++;
-    timers.push(setTimeout(offerRepeatWindow,500));
-  }else{
-    endGame(wrongIdx);
-  }
+  endGame(wrongIdx);
 }
-
-function offerRepeatWindow(){
-  clrT();stopFullStrobe();stopRecallTimer();
-  phase='repeat-window';
-  resetCells();
-  $('replay_repeatBtn').classList.add('rby-show');$('replay_repeatBtn').disabled=false;
-  updateHUD();
-  $('replay_clockFill').style.width='100%';$('replay_hTr').textContent='--';
-  var upcomingPts=repeatOfferNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT AVAILABLE — TAP WHEN READY ('+upcomingPts+' PTS)','rby-repeat');
-}
-
-function useRepeat(){
-  if(phase!=='repeat-window')return;
-  attemptNum++;
-  $('replay_repeatBtn').disabled=true;
-  clrT();stopFullStrobe();
-  phase='showing';playerIdx=0;firstTapDone=false;
-  resetCells();
-  $('replay_clockFill').style.width='100%';$('replay_hTr').textContent='--';
-  var pts=attemptNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT '+attemptNum+' · WORTH '+pts,'rby-repeat');
-  timers.push(setTimeout(function(){
-    revealSequence(function(){
-      msg('⚡ REPLAY IT! ('+pts+' PT'+(pts===1?'':'S')+')','rby-go');
-      phase='tapping';
-      startFullStrobe();
-      startRecallTimer();
-    });
-  },700));
-}
-$('replay_repeatBtn').onclick=useRepeat;
 
 
 function startRound(){
@@ -488,7 +439,6 @@ function startRound(){
   clrT();phase='showing';playerIdx=0;firstTapDone=false;attemptNum=0;repeatOfferNum=0;
   resetCells();stopFullStrobe();stopRecallTimer();
   $('replay_actBtn').disabled=true;$('replay_restartBtn').style.display='none';
-  $('replay_repeatBtn').classList.remove('rby-show');
   updateHUD();
   $('replay_clockFill').style.width='100%';$('replay_hTr').textContent='--';
   sequence=genSeq();
@@ -564,7 +514,6 @@ function handleTimeout(){
 
 function endGame(wrongIdx){
   phase='idle';clrT();stopFullStrobe();stopRecallTimer();
-  $('replay_repeatBtn').classList.remove('rby-show');
   if(wrongIdx!==null)cellSt(wrongIdx,'rby-wrong');
   roundShotLog.push({hit:false,round:g.cellCount,pts:0});
   g.streak=0;updateHUD();
@@ -572,7 +521,21 @@ function endGame(wrongIdx){
 
   timers.push(setTimeout(function(){
     sequence.forEach(function(si,n){cellSt(si,'rby-correct',n+1)});
-    timers.push(setTimeout(showFinalScore,900));
+    if(isFullGameActive()){
+      // The tracked Full Game keeps its own, existing flow — a miss
+      // still moves on to the next quarter, not back to the hub.
+      timers.push(setTimeout(showFinalScore,900));
+    }else{
+      // Standalone practice — a miss genuinely ends the round right
+      // here. Brief "missed" notice, then straight back to the hub,
+      // no in-page "Play Again" screen to linger on.
+      timers.push(setTimeout(function(){
+        msg('MISSED — TRY AGAIN','rby-miss');
+        timers.push(setTimeout(function(){
+          window.location.href='dynamic-hub.html';
+        },1400));
+      },500));
+    }
   },400));
 }
 
@@ -580,7 +543,6 @@ function autoNextRound(){if(phase!=='idle')return;resetCells();$('replay_clockFi
 
 function showFinalScore(){
   phase='idle';clrT();resetCells();updateHUD();$('replay_clockFill').style.width='0%';$('replay_hTr').textContent='--';
-  $('replay_repeatBtn').classList.remove('rby-show');
   if(gameMode==='training'){
     msg(g.roundsDone+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' · SCORE '+g.sc,'rby-miss');
   }else{
@@ -593,7 +555,6 @@ function showFinalScore(){
 
 function showTrainingComplete(){
   phase='idle';clrT();resetCells();updateHUD();$('replay_clockFill').style.width='0%';$('replay_hTr').textContent='--';
-  $('replay_repeatBtn').classList.remove('rby-show');
   msg('🏆 '+TRAINING_ROUNDS+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' COMPLETE! · SCORE '+g.sc,'rby-perfect');
   $('replay_actBtn').textContent="PLAY AGAIN";$('replay_actBtn').onclick=restartGame;$('replay_actBtn').disabled=false;
   $('replay_restartBtn').style.display='none';
@@ -605,7 +566,6 @@ function restartGame(){
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('replay_clockFill').style.width='0%';$('replay_hTr').textContent='--';
-  $('replay_repeatBtn').classList.remove('rby-show');
   msg("TAP LET'S GO!",'rby-watch');
   $('replay_actBtn').textContent="LET'S GO";$('replay_actBtn').onclick=startRound;$('replay_actBtn').disabled=false;$('replay_restartBtn').style.display='none';
 }
