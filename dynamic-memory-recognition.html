@@ -170,7 +170,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <div class="rcg-top-box"><div class="rcg-top-label" id="recog_hRdLbl">Pattern</div><div class="rcg-top-val" id="recog_hRd">3</div></div>
     <div class="rcg-top-box"><div class="rcg-top-label" id="recog_hLvLbl">Best</div><div class="rcg-top-val" id="recog_hLv">0</div></div>
     <div class="rcg-top-box"><div class="rcg-top-label">Streak</div><div class="rcg-top-val" id="recog_hSt">0</div></div>
-    <div class="rcg-top-box"><div class="rcg-top-label">Repeats Left</div><div class="rcg-top-val" id="recog_hAtt">2</div></div>
     <div class="rcg-top-box"><div class="rcg-top-label">Timer</div><div class="rcg-top-val" id="recog_hPf">--</div></div>
   </div>
   <div class="rcg-timerbar"><div class="rcg-timerbar-fill" id="recog_timerFill" style="width:100%"></div></div>
@@ -181,7 +180,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <button class="rcg-bot-btn" id="recog_menuBtn">← Home<span>Settings</span></button>
     <button class="rcg-bot-btn" id="recog_fsBtn">⛶ Full<span>Screen</span></button>
     <button class="rcg-bot-btn rcg-start-btn" id="recog_actBtn">LET'S GO</button>
-    <button class="rcg-bot-btn rcg-repeat-btn" id="recog_repeatBtn">↻ REPEAT<span>2 per round</span></button>
     <button class="rcg-bot-btn" id="recog_restartBtn" style="display:none;visibility:hidden;pointer-events:none;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8892a0;font-size:.8rem" onclick="restartGame()">↺ Restart<span style="color:#555">Level 1</span></button>
   </div>
 </div>
@@ -357,11 +355,6 @@ function launchGame(nm){
   g.cellCount=getInitialCellCount();g.roundsDone=0;
   buildCourt();updateHUD();
   resizeCourtToFit();
-  // The "Repeats Left" box only means anything when a repeat is
-  // actually offered — during the Full Game that never happens, so
-  // showing a counter that can only ever read 2 would be misleading.
-  var repeatsBox=$('recog_hAtt').closest('.rcg-top-box');
-  if(repeatsBox)repeatsBox.style.visibility=isFullGameActive()?'hidden':'visible';
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 $('recog_startBtn').onclick=function(){
@@ -419,7 +412,6 @@ function updateHUD(){
     $('recog_hLv').textContent=g.best;
   }
   $('recog_hSt').textContent=g.streak;
-  $('recog_hAtt').textContent=Math.max(0,2-repeatOfferNum);
   $('recog_ps1').textContent=g.cellCount;
 }
 function msg(txt,cls){var el=$('recog_msg');el.textContent=txt;el.className='rcg-msg-bar '+(cls||'rcg-watch')}
@@ -453,62 +445,18 @@ function revealWatchEcho(){
   timers.push(setTimeout(watchNext,500));
 }
 
-// A wrong answer no longer ends the game outright — it opens a timed
-// window where the player must actively click REPEAT to get another
-// chance. Missing that window (timeout) counts the same as failing it.
-// Up to two such windows per round: 1st repeat used = cellCount*5 if
-// then correct, 2nd repeat used = cellCount*1. A failure (wrong answer
-// or window timeout) while already on the 2nd window ends the game —
-// the answer only gets revealed at that final point, never before, so
-// a repeat chance never spoils itself.
-// A wrong tap normally opens a timed window where the player must
-// actively click REPEAT to get another chance (up to two per round,
-// at a reduced point value). During the tracked Full Game, that
-// safety net is removed entirely — a miss ends the quarter right
-// away, same as every other quarter in that run. Standalone practice
-// keeps the original repeat behavior unchanged, since it's the
-// defining mechanic of this game on its own.
+// A wrong tap now genuinely ends the game outright — these are
+// practice/how-to-play rounds, not a scored run with retries, so a
+// miss goes straight to the final-score screen and back to the hub.
 function handleFailure(wrongIdx){
-  if(wrongIdx!==null)cellSt(wrongIdx,'rcg-wrong');
-  if(!isFullGameActive() && repeatOfferNum<2){
-    repeatOfferNum++;
-    timers.push(setTimeout(offerRepeatWindow,900));
-  }else{
-    revealAnswer();
-    endGame(wrongIdx,true);
-  }
+  endGame(wrongIdx);
 }
-
-function offerRepeatWindow(){
-  clrT();canTap=false;stopTimer();stopFullStrobe();
-  phase='repeat-window';
-  resetCells();
-  $('recog_repeatBtn').classList.add('rcg-show');$('recog_repeatBtn').disabled=false;
-  updateHUD();
-  $('recog_hPf').textContent='--';
-  var upcomingPts=repeatOfferNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT AVAILABLE — TAP WHEN READY ('+upcomingPts+' PTS)','rcg-repeat');
-}
-
-function useRepeat(){
-  if(phase!=='repeat-window')return;
-  attemptNum++;
-  $('recog_repeatBtn').disabled=true;
-  clrT();canTap=false;stopFullStrobe();
-  resetCells();
-  $('recog_hPf').textContent='--';
-  var pts=attemptNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT '+attemptNum+' · WORTH '+pts,'rcg-repeat');
-  timers.push(setTimeout(revealWatchEcho,700));
-}
-$('recog_repeatBtn').onclick=useRepeat;
 
 function startRound(){
   if(phase!=='idle')return;
   clrT();canTap=false;stopTimer();stopFullStrobe();firstTapDone=false;attemptNum=0;repeatOfferNum=0;
   genPatterns();
   resetCells();$('recog_actBtn').disabled=true;$('recog_restartBtn').style.display='none';
-  $('recog_repeatBtn').classList.remove('rcg-show');
   updateHUD();
   $('recog_hPf').textContent='--';
   revealWatchEcho();
@@ -600,21 +548,32 @@ function roundSuccess(){
 
 function autoNextRound(){if(phase!=='idle')return;resetCells();stopTimer();$('recog_hPf').textContent='--';$('recog_restartBtn').style.display='none';$('recog_actBtn').disabled=true;startRound()}
 
-function endGame(wrongIdx,alreadyRevealed){
+function endGame(wrongIdx){
   phase='idle';clrT();stopFullStrobe();stopTimer();
-  $('recog_repeatBtn').classList.remove('rcg-show');
-  if(wrongIdx!==null&&!alreadyRevealed){cellSt(wrongIdx,'rcg-wrong');revealAnswer();}
+  if(wrongIdx!==null){cellSt(wrongIdx,'rcg-wrong');revealAnswer();}
   roundShotLog.push({hit:false,round:g.cellCount,pts:0});
   g.streak=0;updateHUD();
-  if(!alreadyRevealed)msg('WRONG CELL — GAME OVER!','rcg-miss');
-  else msg((wrongIdx!==null?'WRONG CELL':"TIME'S UP")+' — GAME OVER!','rcg-miss');
+  msg((wrongIdx!==null?'WRONG CELL':"TIME'S UP")+' — GAME OVER!','rcg-miss');
 
-  timers.push(setTimeout(showFinalScore,1000));
+  if(isFullGameActive()){
+    // The tracked Full Game keeps its own, existing flow — a miss
+    // still moves on to the next quarter, not back to the hub.
+    timers.push(setTimeout(showFinalScore,1000));
+  }else{
+    // Standalone practice — a miss genuinely ends the round right
+    // here. Brief "missed" notice, then straight back to the hub,
+    // no in-page "Play Again" screen to linger on.
+    timers.push(setTimeout(function(){
+      msg('MISSED — TRY AGAIN','rcg-miss');
+      timers.push(setTimeout(function(){
+        window.location.href='dynamic-hub.html';
+      },1400));
+    },1000));
+  }
 }
 
 function showFinalScore(){
   phase='idle';clrT();resetCells();updateHUD();$('recog_hPf').textContent='--';
-  $('recog_repeatBtn').classList.remove('rcg-show');
   if(gameMode==='training'){
     msg(g.roundsDone+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' · SCORE '+g.sc,'rcg-miss');
   }else{
@@ -627,7 +586,6 @@ function showFinalScore(){
 
 function showTrainingComplete(){
   phase='idle';clrT();resetCells();updateHUD();$('recog_hPf').textContent='--';
-  $('recog_repeatBtn').classList.remove('rcg-show');
   msg('🏆 '+TRAINING_ROUNDS+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' COMPLETE! · SCORE '+g.sc,'rcg-perfect');
   $('recog_actBtn').textContent="PLAY AGAIN";$('recog_actBtn').onclick=restartGame;$('recog_actBtn').disabled=false;
   $('recog_restartBtn').style.display='none';
@@ -639,7 +597,6 @@ function restartGame(){
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('recog_hPf').textContent='--';
-  $('recog_repeatBtn').classList.remove('rcg-show');
   msg("TAP LET'S GO!",'rcg-watch');
   $('recog_actBtn').textContent="LET'S GO";$('recog_actBtn').onclick=startRound;$('recog_actBtn').disabled=false;$('recog_restartBtn').style.display='none';
 }
