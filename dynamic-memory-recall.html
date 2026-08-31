@@ -187,7 +187,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <div class="top-box"><div class="top-label" id="hRdLbl">Sequence</div><div class="top-val" id="hRd">3</div></div>
     <div class="top-box"><div class="top-label" id="hLvLbl">Best</div><div class="top-val" id="hLv">0</div></div>
     <div class="top-box"><div class="top-label">Streak</div><div class="top-val" id="hSt">0</div></div>
-    <div class="top-box"><div class="top-label">Repeats Left</div><div class="top-val" id="hAtt">2</div></div>
     <div class="top-box"><div class="top-label">Timer</div><div class="top-val" id="hPf">--</div></div>
   </div>
   <div class="clockbar"><div class="clockbar-fill" id="clockFill" style="width:0%"></div></div>
@@ -198,7 +197,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <button class="bot-btn" id="menuBtn">← Home<span>Settings</span></button>
     <button class="bot-btn" id="fsBtn">⛶ Full<span>Screen</span></button>
     <button class="bot-btn start-btn" id="actBtn">LET'S GO</button>
-    <button class="bot-btn repeat-btn" id="repeatBtn">↻ REPEAT<span>2 per round</span></button>
     <button class="bot-btn" id="restartBtn" style="display:none;visibility:hidden;pointer-events:none;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8892a0;font-size:.8rem" onclick="restartGame()">↺ Restart<span style="color:#555">Level 1</span></button>
   </div>
 </div>
@@ -289,11 +287,6 @@ function launchGame(name){
   g.cellCount=getInitialCellCount();g.roundsDone=0;
   buildCourt();updateHUD();
   resizeCourtToFit();
-  // The "Repeats Left" box only means anything when a repeat is
-  // actually offered — during the Full Game that never happens, so
-  // showing a counter that can only ever read 2 would be misleading.
-  var repeatsBox=$('hAtt').closest('.top-box');
-  if(repeatsBox)repeatsBox.style.visibility=isFullGameActive()?'hidden':'visible';
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 $('seqStartBtn').onclick=function(){
@@ -356,7 +349,6 @@ function updateHUD(){
     $('hLv').textContent=g.best;
   }
   $('hSt').textContent=g.streak;
-  $('hAtt').textContent=Math.max(0,2-repeatOfferNum);
   $('ps1').textContent=g.cellCount;
 }
 function msg(txt,cls){var el=$('msg');el.textContent=txt;el.className='msg-bar '+(cls||'watch')}
@@ -393,68 +385,19 @@ function revealPattern(cb){
   },showMs));
 }
 
-// A wrong answer no longer ends the game outright — the player gets a
-// chance to click REPEAT and try again. The pressure stays where it
-// belongs: on recalling the pattern within the beat. Deciding whether
-// to use a repeat is untimed — the clock only runs again once they've
-// actually committed to trying. Up to two repeats per round: 1st used =
-// cellCount*5 if then correct, 2nd used = cellCount*1. A failure while
-// already on the 2nd (final) repeat ends the game.
-// A wrong tap normally opens a timed window where the player must
-// actively click REPEAT to get another chance (up to two per round,
-// at a reduced point value). During the tracked Full Game, that
-// safety net is removed entirely — a miss ends the quarter right
-// away, same as every other quarter in that run. Standalone practice
-// keeps the original repeat behavior unchanged, since it's the
-// defining mechanic of this game on its own.
+// A wrong tap now genuinely ends the game outright — these are
+// practice/how-to-play rounds, not a scored run with retries, so a
+// miss goes straight to the final-score screen and back to the hub.
 function handleFailure(wrongIdx){
   if(wrongIdx!==null)cellSt(wrongIdx,'wrong');
-  if(!isFullGameActive() && repeatOfferNum<2){
-    repeatOfferNum++;
-    timers.push(setTimeout(offerRepeatWindow,500));
-  }else{
-    endGame(wrongIdx);
-  }
+  endGame(wrongIdx);
 }
-
-function offerRepeatWindow(){
-  clrT();stopFullStrobe();stopRecallTimer();
-  phase='repeat-window';
-  resetCells();
-  $('repeatBtn').classList.add('show');$('repeatBtn').disabled=false;
-  updateHUD();
-  $('clockFill').style.width='100%';$('hPf').textContent='--';
-  var upcomingPts=repeatOfferNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT AVAILABLE — TAP WHEN READY ('+upcomingPts+' PTS)','repeat');
-}
-
-function useRepeat(){
-  if(phase!=='repeat-window')return;
-  attemptNum++;
-  $('repeatBtn').disabled=true;
-  clrT();stopFullStrobe();
-  phase='showing';playerIdx=0;firstTapDone=false;
-  resetCells();
-  $('clockFill').style.width='100%';$('hPf').textContent='--';
-  var pts=attemptNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT '+attemptNum+' · WORTH '+pts,'repeat');
-  timers.push(setTimeout(function(){
-    revealPattern(function(){
-      msg('⚡ RECALL NOW! ('+pts+' PT'+(pts===1?'':'S')+')','go');
-      phase='tapping';
-      startFullStrobe();
-      startRecallTimer();
-    });
-  },700));
-}
-$('repeatBtn').onclick=useRepeat;
 
 function startRound(){
   if(phase!=='idle')return;
   clrT();phase='showing';playerIdx=0;firstTapDone=false;attemptNum=0;repeatOfferNum=0;
   resetCells();stopFullStrobe();stopRecallTimer();
   $('actBtn').disabled=true;$('restartBtn').style.display='none';
-  $('repeatBtn').classList.remove('show');
   updateHUD();
   $('clockFill').style.width='100%';$('hPf').textContent='--';
   var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,g.cellCount);
@@ -528,7 +471,6 @@ function handleTimeout(){
 
 function endGame(wrongIdx){
   phase='idle';clrT();stopFullStrobe();stopRecallTimer();
-  $('repeatBtn').classList.remove('show');
   if(wrongIdx!==null)cellSt(wrongIdx,'wrong');
   roundShotLog.push({hit:false,round:g.cellCount,pts:0});
   g.streak=0;updateHUD();
@@ -536,7 +478,21 @@ function endGame(wrongIdx){
 
   timers.push(setTimeout(function(){
     pattern.forEach(function(pi,n){cellSt(pi,'reveal',n+1)});
-    timers.push(setTimeout(showFinalScore,900));
+    if(isFullGameActive()){
+      // The tracked Full Game keeps its own, existing flow — a miss
+      // still moves on to the next quarter, not back to the hub.
+      timers.push(setTimeout(showFinalScore,900));
+    }else{
+      // Standalone practice — a miss genuinely ends the round right
+      // here. Brief "missed" notice, then straight back to the hub,
+      // no in-page "Play Again" screen to linger on.
+      timers.push(setTimeout(function(){
+        msg('MISSED — TRY AGAIN','miss');
+        timers.push(setTimeout(function(){
+          window.location.href='dynamic-hub.html';
+        },1400));
+      },500));
+    }
   },400));
 }
 
@@ -587,7 +543,6 @@ function showQuarterStats(finalScore){
 
 function showFinalScore(){
   phase='idle';clrT();resetCells();updateHUD();$('clockFill').style.width='0%';$('hPf').textContent='--';
-  $('repeatBtn').classList.remove('show');
   if(gameMode==='training'){
     msg(g.roundsDone+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' · SCORE '+g.sc,'miss');
   }else{
@@ -600,7 +555,6 @@ function showFinalScore(){
 
 function showTrainingComplete(){
   phase='idle';clrT();resetCells();updateHUD();$('clockFill').style.width='0%';$('hPf').textContent='--';
-  $('repeatBtn').classList.remove('show');
   msg('🏆 '+TRAINING_ROUNDS+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' COMPLETE! · SCORE '+g.sc,'perfect');
   $('actBtn').textContent="PLAY AGAIN";$('actBtn').onclick=restartGame;$('actBtn').disabled=false;
   $('restartBtn').style.display='none';
@@ -612,7 +566,6 @@ function restartGame(){
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('clockFill').style.width='0%';$('hPf').textContent='--';
-  $('repeatBtn').classList.remove('show');
   msg("TAP LET'S GO!",'watch');
   $('actBtn').textContent="LET'S GO";$('actBtn').onclick=startRound;$('actBtn').disabled=false;$('restartBtn').style.display='none';
 }
