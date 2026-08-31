@@ -166,7 +166,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <div class="rbb-top-box"><div class="rbb-top-label" id="reflex_hRdLbl">Targets</div><div class="rbb-top-val" id="reflex_hRd">3</div></div>
     <div class="rbb-top-box"><div class="rbb-top-label" id="reflex_hLvLbl">Best</div><div class="rbb-top-val" id="reflex_hLv">0</div></div>
     <div class="rbb-top-box"><div class="rbb-top-label">Streak</div><div class="rbb-top-val" id="reflex_hSt">0</div></div>
-    <div class="rbb-top-box"><div class="rbb-top-label">Repeats Left</div><div class="rbb-top-val" id="reflex_hAtt">2</div></div>
     <div class="rbb-top-box"><div class="rbb-top-label">Timer</div><div class="rbb-top-val" id="reflex_hPf">--</div></div>
   </div>
   <div class="rbb-clockbar"><div class="rbb-clockbar-fill" id="reflex_clockFill" style="width:0%"></div></div>
@@ -177,7 +176,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <button class="rbb-bot-btn" id="reflex_menuBtn">← Home<span>Settings</span></button>
     <button class="rbb-bot-btn" id="reflex_fsBtn">⛶ Full<span>Screen</span></button>
     <button class="rbb-bot-btn rbb-start-btn" id="reflex_actBtn">LET'S GO</button>
-    <button class="rbb-bot-btn rbb-repeat-btn" id="reflex_repeatBtn">↻ REPEAT<span>2 per round</span></button>
     <button class="rbb-bot-btn" id="reflex_restartBtn" style="display:none;visibility:hidden;pointer-events:none;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8892a0;font-size:.8rem" onclick="restartGame()">↺ Restart<span style="color:#555">Level 1</span></button>
   </div>
 </div>
@@ -327,11 +325,6 @@ function launchGame(nm){
   g.cellCount=getInitialCellCount();g.roundsDone=0;
   buildCourt();updateHUD();
   resizeCourtToFit();
-  // The "Repeats Left" box only means anything when a repeat is
-  // actually offered — during the Full Game that never happens, so
-  // showing a counter that can only ever read 2 would be misleading.
-  var repeatsBox=$('reflex_hAtt').closest('.rbb-top-box');
-  if(repeatsBox)repeatsBox.style.visibility=isFullGameActive()?'hidden':'visible';
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 $('reflex_startBtn').onclick=function(){
@@ -391,7 +384,6 @@ function updateHUD(){
     $('reflex_hLv').textContent=g.best;
   }
   $('reflex_hSt').textContent=g.streak;
-  $('reflex_hAtt').textContent=Math.max(0,2-repeatOfferNum);
   $('reflex_ps1').textContent=g.cellCount;
 }
 function msg(txt,cls){var el=$('reflex_msg');el.textContent=txt;el.className='rbb-msg-bar '+(cls||'rbb-watch')}
@@ -428,68 +420,19 @@ function revealTargets(cb){
   },showMs));
 }
 
-// A wrong tap no longer ends the game outright — the player gets a
-// chance to click REPEAT and try again. The pressure stays where it
-// belongs: on finding the targets within the beat. Deciding whether to
-// use a repeat is untimed — the clock only runs again once they've
-// actually committed to trying. Up to two repeats per round: 1st used =
-// cellCount*5 if then correct, 2nd used = cellCount*1. A failure while
-// already on the 2nd (final) repeat ends the game.
-// A wrong tap normally opens a timed window where the player must
-// actively click REPEAT to get another chance (up to two per round,
-// at a reduced point value). During the tracked Full Game, that
-// safety net is removed entirely — a miss ends the quarter right
-// away, same as every other quarter in that run. Standalone practice
-// keeps the original repeat behavior unchanged, since it's the
-// defining mechanic of this game on its own.
+// A wrong tap now genuinely ends the game outright — these are
+// practice/how-to-play rounds, not a scored run with retries, so a
+// miss goes straight to the final-score screen and back to the hub.
 function handleFailure(wrongIdx){
   if(wrongIdx!==null)cellSt(wrongIdx,'rbb-wrong');
-  if(!isFullGameActive() && repeatOfferNum<2){
-    repeatOfferNum++;
-    timers.push(setTimeout(offerRepeatWindow,500));
-  }else{
-    endGame(wrongIdx);
-  }
+  endGame(wrongIdx);
 }
-
-function offerRepeatWindow(){
-  clrT();stopFullStrobe();stopRecallTimer();
-  phase='repeat-window';
-  resetCells();
-  $('reflex_repeatBtn').classList.add('rbb-show');$('reflex_repeatBtn').disabled=false;
-  updateHUD();
-  $('reflex_clockFill').style.width='100%';$('reflex_hPf').textContent='--';
-  var upcomingPts=repeatOfferNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT AVAILABLE — TAP WHEN READY ('+upcomingPts+' PTS)','rbb-repeat');
-}
-
-function useRepeat(){
-  if(phase!=='repeat-window')return;
-  attemptNum++;
-  $('reflex_repeatBtn').disabled=true;
-  clrT();stopFullStrobe();
-  phase='showing';found=[];firstTapDone=false;
-  resetCells();
-  $('reflex_clockFill').style.width='100%';$('reflex_hPf').textContent='--';
-  var pts=attemptNum===1?g.cellCount*5:g.cellCount*1;
-  msg('↻ REPEAT '+attemptNum+' · WORTH '+pts,'rbb-repeat');
-  timers.push(setTimeout(function(){
-    revealTargets(function(){
-      msg('⚡ FIND THEM ALL! ('+pts+' PT'+(pts===1?'':'S')+')','rbb-go');
-      phase='tapping';
-      startFullStrobe();
-      startRecallTimer();
-    });
-  },700));
-}
-$('reflex_repeatBtn').onclick=useRepeat;
 
 function startRound(){
   if(phase!=='idle')return;
   clrT();phase='showing';found=[];firstTapDone=false;attemptNum=0;repeatOfferNum=0;
   resetCells();stopFullStrobe();stopRecallTimer();
   $('reflex_actBtn').disabled=true;$('reflex_restartBtn').style.display='none';
-  $('reflex_repeatBtn').classList.remove('rbb-show');
   updateHUD();
   $('reflex_clockFill').style.width='100%';$('reflex_hPf').textContent='--';
   var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,g.cellCount);
@@ -564,7 +507,6 @@ function handleTimeout(){
 
 function endGame(wrongIdx){
   phase='idle';clrT();stopFullStrobe();stopRecallTimer();
-  $('reflex_repeatBtn').classList.remove('rbb-show');
   if(wrongIdx!==null)cellSt(wrongIdx,'rbb-wrong');
   roundShotLog.push({hit:false,round:g.cellCount,pts:0});
   g.streak=0;updateHUD();
@@ -572,7 +514,21 @@ function endGame(wrongIdx){
 
   timers.push(setTimeout(function(){
     targets.forEach(function(pi){if(found.indexOf(pi)===-1)cellSt(pi,'rbb-missed')});
-    timers.push(setTimeout(showFinalScore,900));
+    if(isFullGameActive()){
+      // The tracked Full Game keeps its own, existing flow — a miss
+      // still moves on to the next quarter, not back to the hub.
+      timers.push(setTimeout(showFinalScore,900));
+    }else{
+      // Standalone practice — a miss genuinely ends the round right
+      // here. Brief "missed" notice, then straight back to the hub,
+      // no in-page "Play Again" screen to linger on.
+      timers.push(setTimeout(function(){
+        msg('MISSED — TRY AGAIN','rbb-miss');
+        timers.push(setTimeout(function(){
+          window.location.href='dynamic-hub.html';
+        },1400));
+      },500));
+    }
   },400));
 }
 
@@ -580,7 +536,6 @@ function autoNextRound(){if(phase!=='idle')return;resetCells();$('reflex_clockFi
 
 function showFinalScore(){
   phase='idle';clrT();resetCells();updateHUD();$('reflex_clockFill').style.width='0%';$('reflex_hPf').textContent='--';
-  $('reflex_repeatBtn').classList.remove('rbb-show');
   if(gameMode==='training'){
     msg(g.roundsDone+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' · SCORE '+g.sc,'rbb-miss');
   }else{
@@ -593,7 +548,6 @@ function showFinalScore(){
 
 function showTrainingComplete(){
   phase='idle';clrT();resetCells();updateHUD();$('reflex_clockFill').style.width='0%';$('reflex_hPf').textContent='--';
-  $('reflex_repeatBtn').classList.remove('rbb-show');
   msg('🏆 '+TRAINING_ROUNDS+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' COMPLETE! · SCORE '+g.sc,'rbb-perfect');
   $('reflex_actBtn').textContent="PLAY AGAIN";$('reflex_actBtn').onclick=restartGame;$('reflex_actBtn').disabled=false;
   $('reflex_restartBtn').style.display='none';
@@ -605,7 +559,6 @@ function restartGame(){
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('reflex_clockFill').style.width='0%';$('reflex_hPf').textContent='--';
-  $('reflex_repeatBtn').classList.remove('rbb-show');
   msg("TAP LET'S GO!",'rbb-watch');
   $('reflex_actBtn').textContent="LET'S GO";$('reflex_actBtn').onclick=startRound;$('reflex_actBtn').disabled=false;$('reflex_restartBtn').style.display='none';
 }
