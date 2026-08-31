@@ -179,6 +179,16 @@ footer{
   font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(4px);
 }
 
+/* Switch Program — moved out of the inline panel and up to a fixed
+   corner button, matching Reaction Velocity's own placement and
+   label exactly, so the same action reads the same way on both
+   products. Session-clearing logic underneath is unchanged. */
+#switchProgramBtn{
+  position:fixed;top:56px;left:14px;z-index:30;padding:8px 14px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:.72rem;
+  font-weight:900;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(4px);
+}
+
 /* Reaction Velocity — a direct link across to the platform's sibling
    product. Right corner, below the sound toggle — separate from
    Exit on the left, since this is a cross-product link, not a
@@ -214,6 +224,7 @@ footer{
 <body>
 <button id="soundToggle" aria-label="Toggle sound" title="Toggle beat sound">🔊</button>
 <button id="exitHubBtn" type="button">Exit →</button>
+<button id="switchProgramBtn" type="button">🔄 Switch Program</button>
 <a id="reactionVelocityTab" href="https://hooporia.com">⚡ Reaction Velocity</a>
 
 <div id="stage">
@@ -260,7 +271,6 @@ footer{
     <a href="dynamic-memory-standings.html" style="margin:0 auto 12px;padding:12px 18px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;max-width:400px">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1.5px;color:#c9a3fa">🏆 View Standings</span>
     </a>
-    <button id="switchCodeBtn" style="margin:0 auto 18px;padding:10px 16px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;display:block">🔄 Switch School / Enter New Code</button>
 
     <footer>Gostar Digital LLC</footer>
   </div>
@@ -299,7 +309,7 @@ document.getElementById('exitHubBtn').addEventListener('click',function(){
 // needing any browser/settings knowledge at all. A confirm dialog
 // guards against an accidental tap locking someone out of the game
 // with no new code in hand yet.
-document.getElementById('switchCodeBtn').addEventListener('click',function(){
+document.getElementById('switchProgramBtn').addEventListener('click',function(){
   if(!confirm('Switch to a new school or code? You\'ll need a new access code to get back in.'))return;
   sessionStorage.removeItem('dynamic-memory-gate-pass');
   sessionStorage.removeItem('hoop-license');
