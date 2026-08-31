@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <script>
-if (sessionStorage.getItem('dynamic-memory-gate-pass') !== '1') {
+if (sessionStorage.getItem('dynamic-memory-standings-gate-pass') !== '1') {
   window.location.replace('index.html');
 }
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>HOOPORIA — STANDINGS</title>
+<title>DYNAMIC MEMORY — STANDINGS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;color:#fff;background:#000;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -56,7 +56,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   <button class="box-back-btn" id="refreshBtn" type="button">🔄 Refresh</button>
   <button id="exitBtn" type="button">Exit →</button>
   <div class="box-title">THE <span>STANDINGS</span></div>
-  <div class="box-sub" id="boxSub">Hooporia · Best Total Score Per Player</div>
+  <div class="box-sub" id="boxSub">Dynamic Memory · Best Total Score Per Player</div>
 
   <div class="standings-wrap">
     <div class="standings-row-header">
@@ -74,7 +74,7 @@ var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var SB_TABLE='hooporia_4qtr_standings';
 
 function fetchStandings(){
-  var school=sessionStorage.getItem('hoop-school')||'';
+  var school=sessionStorage.getItem('dynamic-memory-standings-school')||'';
   var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,q1_score,q2_score,q3_score,q4_score,total_score&order=total_score.desc&school_name=eq.'+encodeURIComponent(school);
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
@@ -131,11 +131,12 @@ function renderStandings(){
   });
 }
 
-var schoolName=sessionStorage.getItem('hoop-school');
+var schoolName=sessionStorage.getItem('dynamic-memory-standings-school');
 if(schoolName){document.getElementById('boxSub').textContent=schoolName+' · Best Total Score Per Player';}
 renderStandings();
 document.getElementById('refreshBtn').addEventListener('click', renderStandings);
 document.getElementById('exitBtn').addEventListener('click', function(){
+  sessionStorage.removeItem('dynamic-memory-standings-gate-pass');
   window.location.href = 'dynamic-hub.html';
 });
 setInterval(renderStandings, 30000);
