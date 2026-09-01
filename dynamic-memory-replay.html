@@ -206,6 +206,27 @@ var gameMode='game'; // 'game' | 'training'
 //  scoring math, just recording the real result.
 // ══════════════════════════════════════════════════════
 var currentPlayerName='';
+
+// ══════════════════════════════════════════════════════
+//  STANDINGS — its own dedicated, shared table (game_key column
+//  filters per tab), entirely separate from the combined Full Game
+//  board. The score is level_achieved — the sequence length
+//  reached before missing, since this game escalates by exactly
+//  one flash per successful round. Recorded on every genuine game
+//  over, whether standalone practice or part of a tracked Full
+//  Game run.
+// ══════════════════════════════════════════════════════
+var QUARTER_SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
+var QUARTER_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var QUARTER_SB_TABLE='dynamic_memory_quarter_standings';
+var THIS_GAME_KEY='replay';
+function recordLevelToStandings(name,levelAchieved){
+  return fetch(QUARTER_SB_URL+'/rest/v1/'+QUARTER_SB_TABLE,{
+    method:'POST',
+    headers:{'apikey':QUARTER_SB_KEY,'Authorization':'Bearer '+QUARTER_SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({player_name:name,game_key:THIS_GAME_KEY,level_achieved:levelAchieved,school_name:sessionStorage.getItem('hoop-school')||null})
+  }).catch(function(){});
+}
 var roundShotLog=[];
 
 $('playerNameInputMain').addEventListener('keydown',function(e){
@@ -529,6 +550,7 @@ function endGame(wrongIdx){
       // Standalone practice — a miss genuinely ends the round right
       // here. Brief "missed" notice, then straight back to the hub,
       // no in-page "Play Again" screen to linger on.
+      recordLevelToStandings(currentPlayerName,g.best);
       timers.push(setTimeout(function(){
         msg('MISSED — TRY AGAIN','rby-miss');
         timers.push(setTimeout(function(){
@@ -547,6 +569,7 @@ function showFinalScore(){
     msg(g.roundsDone+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' · SCORE '+g.sc,'rby-miss');
   }else{
     msg('GAME OVER — SCORE '+g.sc+' ('+bpm+' BPM · BEST '+g.best+' CELLS)','rby-miss');
+    recordLevelToStandings(currentPlayerName,g.best);
   }
   $('replay_actBtn').textContent="PLAY AGAIN";$('replay_actBtn').onclick=restartGame;$('replay_actBtn').disabled=false;
   $('replay_restartBtn').style.display='none';
