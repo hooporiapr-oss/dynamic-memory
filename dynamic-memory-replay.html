@@ -570,15 +570,15 @@ function restartGame(){
   $('replay_actBtn').textContent="LET'S GO";$('replay_actBtn').onclick=startRound;$('replay_actBtn').disabled=false;$('replay_restartBtn').style.display='none';
 }
 $('replay_actBtn').onclick=startRound;
-buildCourt();
 $('replayExitBtn').onclick=function(){window.location.href='dynamic-hub.html';};
 
-// Every visit launches straight into gameplay now — the name-entry
-// screen only ever mattered for the tracked Full Game run, and
-// standalone practice never writes anywhere at all, so there's
-// nothing for a typed name to attribute here.
-var storedName=sessionStorage.getItem('hoop-player-name');
-launchGame(storedName||'Player');
+// The player now genuinely clicks to start, matching the same
+// pattern Ritnome uses — this isn't just about restoring the
+// name-entry step, it's what makes the fullscreen request actually
+// work. A programmatic launchGame() call on page load isn't a real
+// user gesture, so the browser silently, correctly rejects the
+// fullscreen request every time. A genuine click is the only way
+// requestFullscreen() ever succeeds.
 })();
 </script>
 </body>
