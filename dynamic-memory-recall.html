@@ -206,7 +206,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 var $=id=>document.getElementById(id);
 
 var bpm=100;
-var STARTING_CELLS=3;
+var STARTING_CELLS=2;
 
 var gameMode='game'; // 'game' | 'training'
 
@@ -421,8 +421,22 @@ function startRound(){
   $('actBtn').disabled=true;$('restartBtn').style.display='none';
   updateHUD();
   $('clockFill').style.width='100%';$('hPf').textContent='--';
-  var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,g.cellCount);
-  pattern=indices;
+  if(gameMode==='training'){
+    // Training plays at one fixed, selected level throughout — a
+    // fresh pattern each round, same as before.
+    var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,g.cellCount);
+    pattern=indices;
+  }else{
+    // Game mode now matches The Fortress/Pass Path/Read the
+    // Defense's own established mechanic — the pattern keeps every
+    // earlier position and gets one new, genuinely random cell
+    // added each round, rather than being regenerated from
+    // scratch. The very first round of a new game starts at level
+    // 2 — adds two cells here instead of the usual one — then
+    // every round after this still only ever adds exactly one.
+    var pushCount=pattern.length===0?2:1;
+    for(var pc=0;pc<pushCount;pc++)pattern.push(Math.floor(Math.random()*32));
+  }
   msg('MEMORIZE!','watch');
   timers.push(setTimeout(function(){
     revealPattern(function(){
@@ -587,6 +601,7 @@ function showTrainingComplete(){
 function restartGame(){
   clrT();phase='idle';stopFullStrobe();stopRecallTimer();
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
+  pattern=[];
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('clockFill').style.width='0%';$('hPf').textContent='--';
   msg("TAP LET'S GO!",'watch');
