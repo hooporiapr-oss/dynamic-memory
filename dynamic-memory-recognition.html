@@ -442,14 +442,31 @@ function clrT(){timers.forEach(clearTimeout);timers=[]}
 function shuffle(arr){for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t}return arr}
 
 function genPatterns(){
-  var len=g.cellCount;
-  var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,len);
-  original=indices.slice();echo=indices.slice();
-  changePos=Math.floor(Math.random()*len);
-  originalCell=indices[changePos];
-  var used=indices.slice(),newCell;
-  do{newCell=Math.floor(Math.random()*32)}while(used.indexOf(newCell)!==-1);
-  echo[changePos]=newCell;changedCell=newCell;
+  if(gameMode==='training'){
+    // Training plays at one fixed, selected level throughout — a
+    // fresh alignment each round, same as before.
+    var len=g.cellCount;
+    var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,len);
+    original=indices.slice();echo=indices.slice();
+  }else{
+    // Game mode now matches The Fortress/Pass Path's own
+    // established mechanic — the alignment keeps every earlier
+    // position and gets one new, genuinely random cell added each
+    // round, rather than being regenerated from scratch. Guarded
+    // against duplicates here specifically, since two copies of the
+    // same position would make "which one changed" ambiguous — a
+    // problem Pass Path's own tap-in-sequence mechanic never has.
+    var newCell;
+    do{newCell=Math.floor(Math.random()*32)}while(original.indexOf(newCell)!==-1);
+    original.push(newCell);
+    echo=original.slice();
+  }
+  var len2=original.length;
+  changePos=Math.floor(Math.random()*len2);
+  originalCell=original[changePos];
+  var used=original.slice(),changedNewCell;
+  do{changedNewCell=Math.floor(Math.random()*32)}while(used.indexOf(changedNewCell)!==-1);
+  echo[changePos]=changedNewCell;changedCell=changedNewCell;
 }
 
 function revealWatchEcho(){
@@ -618,6 +635,7 @@ function showTrainingComplete(){
 function restartGame(){
   clrT();phase='idle';canTap=false;stopTimer();stopFullStrobe();
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
+  original=[];
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('recog_hPf').textContent='--';
   msg("TAP LET'S GO!",'rcg-watch');
