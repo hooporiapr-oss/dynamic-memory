@@ -462,7 +462,17 @@ function startRound(){
   $('replay_actBtn').disabled=true;$('replay_restartBtn').style.display='none';
   updateHUD();
   $('replay_clockFill').style.width='100%';$('replay_hTr').textContent='--';
-  sequence=genSeq();
+  if(gameMode==='training'){
+    // Training plays at one fixed, selected level throughout — a
+    // fresh sequence each round, same as before.
+    sequence=genSeq();
+  }else{
+    // Game mode now matches The Fortress's own established
+    // mechanic exactly — the sequence keeps every earlier position
+    // and just gets one new, genuinely random cell pushed onto the
+    // end each round, rather than being regenerated from scratch.
+    sequence.push(Math.floor(Math.random()*32));
+  }
   msg('WATCH THE SEQUENCE...','rby-watch');
   timers.push(setTimeout(function(){
     revealSequence(function(){
@@ -587,6 +597,7 @@ function showTrainingComplete(){
 function restartGame(){
   clrT();phase='idle';stopFullStrobe();stopRecallTimer();
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
+  sequence=[];
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('replay_clockFill').style.width='0%';$('replay_hTr').textContent='--';
   msg("TAP LET'S GO!",'rby-watch');
