@@ -195,7 +195,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 var $=id=>document.getElementById(id);
 
 var bpm=100;
-var STARTING_CELLS=3;
+var STARTING_CELLS=2;
 
 var gameMode='game'; // 'game' | 'training'
 
@@ -471,7 +471,11 @@ function startRound(){
     // mechanic exactly — the sequence keeps every earlier position
     // and just gets one new, genuinely random cell pushed onto the
     // end each round, rather than being regenerated from scratch.
-    sequence.push(Math.floor(Math.random()*32));
+    // The very first round of a new game starts at level 2 — pushes
+    // two cells here instead of the usual one — then every round
+    // after this still only ever adds exactly one.
+    var pushCount=sequence.length===0?2:1;
+    for(var pc=0;pc<pushCount;pc++)sequence.push(Math.floor(Math.random()*32));
   }
   msg('WATCH THE SEQUENCE...','rby-watch');
   timers.push(setTimeout(function(){
