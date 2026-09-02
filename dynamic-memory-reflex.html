@@ -196,7 +196,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 var $=id=>document.getElementById(id);
 
 var bpm=100;
-var STARTING_CELLS=3;
+var STARTING_CELLS=2;
 
 var gameMode='game'; // 'game' | 'training'
 
@@ -456,8 +456,31 @@ function startRound(){
   $('reflex_actBtn').disabled=true;$('reflex_restartBtn').style.display='none';
   updateHUD();
   $('reflex_clockFill').style.width='100%';$('reflex_hPf').textContent='--';
-  var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,g.cellCount);
-  targets=indices;
+  if(gameMode==='training'){
+    // Training plays at one fixed, selected level throughout — a
+    // fresh set of targets each round, same as before.
+    var indices=shuffle(Array.from({length:32},(_,i)=>i)).slice(0,g.cellCount);
+    targets=indices;
+  }else{
+    // Game mode now matches The Fortress/Pass Path/Play Call/Read
+    // the Defense's own established mechanic — targets keeps every
+    // earlier spot and gets one new, genuinely random spot added
+    // each round, rather than being regenerated from scratch.
+    // Guarded against duplicates specifically, since a repeated
+    // cell here would make found.length able to reach
+    // targets.length — a duplicate could never actually be tapped
+    // twice, so the round would become mathematically
+    // uncompletable without this. The very first round of a new
+    // game starts at level 2 — adds two spots here instead of the
+    // usual one — then every round after this still only ever adds
+    // exactly one.
+    var pushCount=targets.length===0?2:1;
+    for(var pc=0;pc<pushCount;pc++){
+      var newCell;
+      do{newCell=Math.floor(Math.random()*32)}while(targets.indexOf(newCell)!==-1);
+      targets.push(newCell);
+    }
+  }
   msg('WATCH!','rbb-watch');
   timers.push(setTimeout(function(){
     revealTargets(function(){
@@ -580,6 +603,7 @@ function showTrainingComplete(){
 function restartGame(){
   clrT();phase='idle';stopFullStrobe();stopRecallTimer();
   g={sc:0,cellCount:getInitialCellCount(),best:0,streak:0,roundsDone:0};
+  targets=[];
   attemptNum=0;repeatOfferNum=0;roundShotLog=[];
   resetCells();updateHUD();$('reflex_clockFill').style.width='0%';$('reflex_hPf').textContent='--';
   msg("TAP LET'S GO!",'rbb-watch');
@@ -595,6 +619,20 @@ $('reflexExitBtn').onclick=function(){window.location.href='dynamic-hub.html';};
 // user gesture, so the browser silently, correctly rejects the
 // fullscreen request every time. A genuine click is the only way
 // requestFullscreen() ever succeeds.
+//
+// The one real exception: a tracked Full Game run. dynamic-hub.html
+// already requests fullscreen once, at the genuine click that
+// commits to the run, specifically so it persists automatically
+// across all four quarters' own page navigations — this quarter's
+// own launchGame() call below is a safe no-op on the fullscreen
+// front (it checks !document.fullscreenElement first), so skipping
+// the name screen here doesn't reintroduce the bug at all. The
+// player's name is already known from the hub, so there's nothing
+// this screen would add for this specific path anyway.
+if(isFullGameActive()){
+  var storedName=sessionStorage.getItem('hoop-player-name');
+  launchGame(storedName||'Player');
+}
 })();
 </script>
 </body>
