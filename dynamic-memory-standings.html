@@ -220,7 +220,7 @@ function renderForTab(tabKey){
         var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
         var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         var points=p.level*POINTS_PER_LEVEL;
-        var timeDisplay=p.time==null?'--':p.time.toFixed(1)+'s';
+        var timeDisplay=p.time==null?'--':p.time.toFixed(2)+' seconds';
         return '<div class="standings-row '+rankClass+'">'
           +'<div class="standings-row-main">'
             +'<span class="sr-rank">'+(i+1)+'</span>'
