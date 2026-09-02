@@ -442,7 +442,19 @@ function startRound(){
     // 2 — adds two cells here instead of the usual one — then
     // every round after this still only ever adds exactly one.
     var pushCount=pattern.length===0?2:1;
-    for(var pc=0;pc<pushCount;pc++)pattern.push(Math.floor(Math.random()*32));
+    for(var pc=0;pc<pushCount;pc++){
+      // Guarded against duplicates specifically — unlike Pass Path's
+      // one-at-a-time reveal, this game lights every cell in the
+      // pattern at once, each labeled with its own tap-order number.
+      // A repeated cell would get labeled twice in that same pass,
+      // and the second label silently overwrites the first — an
+      // earlier position's number just disappears from the board
+      // (a real, confirmed bug: "123" escalating to a duplicate
+      // showed as "124", not "1234").
+      var newCell;
+      do{newCell=Math.floor(Math.random()*32)}while(pattern.indexOf(newCell)!==-1);
+      pattern.push(newCell);
+    }
   }
   msg('MEMORIZE!','watch');
   timers.push(setTimeout(function(){
