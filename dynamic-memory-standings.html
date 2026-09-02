@@ -22,7 +22,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 .standings-tab{padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#9fb3c8;font-size:.68rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
 .standings-tab.active{border-color:#FF6B35;color:#FF6B35;background:rgba(255,107,53,.1)}
 
-.standings-row-header,.standings-row-main{display:grid;grid-template-columns:28px 1fr 60px 22px;gap:8px;align-items:center;padding:12px 10px;border-radius:10px;width:100%;max-width:520px}
+.standings-row-header,.standings-row-main{display:grid;grid-template-columns:28px 1fr 76px 22px;gap:8px;align-items:center;padding:12px 10px;border-radius:10px;width:100%;max-width:520px}
 .standings-row-header{font-size:.58rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8892a0;padding:0 10px 8px}
 .standings-row-header.flat{grid-template-columns:28px 1fr 60px}
 .standings-row{width:100%;max-width:520px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;margin-bottom:6px;overflow:hidden;cursor:pointer}
@@ -94,11 +94,11 @@ var QUARTER_TABLE='dynamic_memory_quarter_standings';
 var POINTS_PER_LEVEL=10;
 
 var STANDINGS_TABS=[
-  {key:'fullgame',label:'Full Game'},
   {key:'recall',label:'Play Call'},
   {key:'reflex',label:'Shot Map'},
   {key:'replay',label:'Pass Path'},
-  {key:'recognition',label:'Read the Defense'}
+  {key:'recognition',label:'Read the Defense'},
+  {key:'fullgame',label:'Full Game'}
 ];
 var currentTab='fullgame';
 
@@ -208,7 +208,7 @@ function renderForTab(tabKey){
       listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
     });
   }else{
-    $('boxSub').textContent=tabConfig.label+' · Best Score Per Player ('+POINTS_PER_LEVEL+' Pts Per Level)';
+    $('boxSub').textContent=tabConfig.label+' · Best Level Achieved Per Player';
     $('standingsHeader').className='standings-row-header';
     $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Score</span><span></span>';
     fetchQuarterStandings(tabKey).then(function(ranked){
@@ -219,13 +219,13 @@ function renderForTab(tabKey){
       listEl.innerHTML=ranked.map(function(p,i){
         var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
         var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        var points=p.level*POINTS_PER_LEVEL;
+        var levelDisplay='Level '+p.level;
         var timeDisplay=p.time==null?'--':p.time.toFixed(2)+' seconds';
         return '<div class="standings-row '+rankClass+'">'
           +'<div class="standings-row-main">'
             +'<span class="sr-rank">'+(i+1)+'</span>'
             +'<span class="sr-name">'+safeName+'</span>'
-            +'<span class="sr-total">'+points+'</span>'
+            +'<span class="sr-total">'+levelDisplay+'</span>'
             +'<span class="sr-chevron">▼</span>'
           +'</div>'
           +'<div class="standings-detail"><div class="standings-detail-inner single">'
