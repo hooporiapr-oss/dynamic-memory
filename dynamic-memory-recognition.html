@@ -658,6 +658,20 @@ $('recognitionExitBtn').onclick=function(){window.location.href='dynamic-hub.htm
 // user gesture, so the browser silently, correctly rejects the
 // fullscreen request every time. A genuine click is the only way
 // requestFullscreen() ever succeeds.
+//
+// The one real exception: a tracked Full Game run. dynamic-hub.html
+// already requests fullscreen once, at the genuine click that
+// commits to the run, specifically so it persists automatically
+// across all four quarters' own page navigations — this quarter's
+// own launchGame() call below is a safe no-op on the fullscreen
+// front (it checks !document.fullscreenElement first), so skipping
+// the name screen here doesn't reintroduce the bug at all. The
+// player's name is already known from the hub, so there's nothing
+// this screen would add for this specific path anyway.
+if(isFullGameActive()){
+  var storedName=sessionStorage.getItem('hoop-player-name');
+  launchGame(storedName||'Player');
+}
 })();
 </script>
 </body>
