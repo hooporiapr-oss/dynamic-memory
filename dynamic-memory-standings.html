@@ -35,11 +35,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 .standings-row.rank-1 .sr-rank{color:#ffd35a}
 .sr-name{text-align:left;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sr-total{font-weight:900;color:#fff;font-size:1rem;text-align:right}
+.sr-total-sub{display:block;color:#7d8ba3;font-weight:700;font-size:.6rem;letter-spacing:.03em;text-align:right;margin-top:1px}
 .sr-chevron{color:#7c8699;font-size:.7rem;transition:transform .18s;text-align:center}
 .standings-row.open .sr-chevron{transform:rotate(180deg)}
 .standings-detail{max-height:0;overflow:hidden;transition:max-height .2s ease}
 .standings-row.open .standings-detail{max-height:170px}
 .standings-detail-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 12px 10px}
+.standings-detail-inner.single{grid-template-columns:1fr;max-width:160px;margin:0 auto}
 .sd-cell{text-align:center;padding:8px 4px;border-radius:8px;background:rgba(255,255,255,.04)}
 .sd-label{font-size:.56rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#8892a0;margin-bottom:3px}
 .sd-val{font-size:.95rem;font-weight:900;color:#fff}
@@ -119,18 +121,39 @@ function fetchFullGameStandings(){
 
 function fetchQuarterStandings(gameKey){
   var school=sessionStorage.getItem('hoop-school')||'';
-  var url=SB_URL+'/rest/v1/'+QUARTER_TABLE+'?select=player_name,level_achieved&game_key=eq.'+encodeURIComponent(gameKey)+'&school_name=eq.'+encodeURIComponent(school);
+  var url=SB_URL+'/rest/v1/'+QUARTER_TABLE+'?select=player_name,level_achieved,time_seconds&game_key=eq.'+encodeURIComponent(gameKey)+'&school_name=eq.'+encodeURIComponent(school);
   return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
     .then(function(rows){
       var best={};
       (rows||[]).forEach(function(r){
         var existing=best[r.player_name];
-        if(!existing||r.level_achieved>existing.level){
-          best[r.player_name]={name:r.player_name,level:r.level_achieved};
+        // Speed is the real tiebreaker between two players at the
+        // same level — a higher level always wins outright, but
+        // among rows tied at a player's own best level, the faster
+        // time is what actually gets kept. A row with no recorded
+        // time (saved before this was tracked) never beats a real,
+        // timed one at the same level, since "unknown" isn't a
+        // genuine claim to being faster.
+        var isBetter=false;
+        if(!existing){
+          isBetter=true;
+        }else if(r.level_achieved>existing.level){
+          isBetter=true;
+        }else if(r.level_achieved===existing.level){
+          if(r.time_seconds!=null&&(existing.time==null||r.time_seconds<existing.time)){
+            isBetter=true;
+          }
+        }
+        if(isBetter){
+          best[r.player_name]={name:r.player_name,level:r.level_achieved,time:r.time_seconds};
         }
       });
-      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return b.level-a.level});
+      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){
+        if(b.level!==a.level)return b.level-a.level;
+        var at=a.time==null?Infinity:a.time, bt=b.time==null?Infinity:b.time;
+        return at-bt;
+      });
     });
 }
 
@@ -186,8 +209,8 @@ function renderForTab(tabKey){
     });
   }else{
     $('boxSub').textContent=tabConfig.label+' · Best Score Per Player ('+POINTS_PER_LEVEL+' Pts Per Level)';
-    $('standingsHeader').className='standings-row-header flat';
-    $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Score</span>';
+    $('standingsHeader').className='standings-row-header';
+    $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Score</span><span></span>';
     fetchQuarterStandings(tabKey).then(function(ranked){
       if(!ranked.length){
         listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
@@ -197,16 +220,24 @@ function renderForTab(tabKey){
         var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
         var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         var points=p.level*POINTS_PER_LEVEL;
-        return '<div class="standings-row standings-row-flat '+rankClass+'">'
+        var timeDisplay=p.time==null?'--':p.time.toFixed(1)+'s';
+        return '<div class="standings-row '+rankClass+'">'
           +'<div class="standings-row-main">'
             +'<span class="sr-rank">'+(i+1)+'</span>'
             +'<span class="sr-name">'+safeName+'</span>'
             +'<span class="sr-total">'+points+'</span>'
+            +'<span class="sr-chevron">▼</span>'
           +'</div>'
+          +'<div class="standings-detail"><div class="standings-detail-inner single">'
+            +'<div class="sd-cell"><div class="sd-label">Speed</div><div class="sd-val">'+timeDisplay+'</div></div>'
+          +'</div></div>'
           +'</div>';
       }).join('');
-      // Flat rows — the score is the whole story, nothing to
-      // expand, so no click-to-toggle listener needed here.
+      // Each row toggles its own detail open/closed — one player's
+      // speed expanding shouldn't affect any other row on the board.
+      listEl.querySelectorAll('.standings-row').forEach(function(row){
+        row.addEventListener('click',function(){row.classList.toggle('open')});
+      });
     }).catch(function(){
       listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
     });
