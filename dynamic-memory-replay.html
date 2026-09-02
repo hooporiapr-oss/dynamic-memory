@@ -220,11 +220,11 @@ var QUARTER_SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
 var QUARTER_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
 var QUARTER_SB_TABLE='dynamic_memory_quarter_standings';
 var THIS_GAME_KEY='replay';
-function recordLevelToStandings(name,levelAchieved){
+function recordLevelToStandings(name,levelAchieved,timeSeconds){
   return fetch(QUARTER_SB_URL+'/rest/v1/'+QUARTER_SB_TABLE,{
     method:'POST',
     headers:{'apikey':QUARTER_SB_KEY,'Authorization':'Bearer '+QUARTER_SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,game_key:THIS_GAME_KEY,level_achieved:levelAchieved,school_name:sessionStorage.getItem('hoop-school')||null})
+    body:JSON.stringify({player_name:name,game_key:THIS_GAME_KEY,level_achieved:levelAchieved,time_seconds:(timeSeconds===undefined?null:timeSeconds),school_name:sessionStorage.getItem('hoop-school')||null})
   }).catch(function(){});
 }
 var roundShotLog=[];
@@ -426,7 +426,7 @@ function beatPulse(){
   setTimeout(function(){b.classList.remove('pulse')},Math.min(240,getShowMs()*0.4));
 }
 
-var phase='idle',sequence=[],playerIdx=0,timers=[],firstTapDone=false,attemptNum=0,repeatOfferNum=0;
+var phase='idle',sequence=[],playerIdx=0,timers=[],firstTapDone=false,attemptNum=0,repeatOfferNum=0,runStartTime=0;
 function clrT(){timers.forEach(clearTimeout);timers=[]}
 
 function revealSequence(cb){
@@ -462,6 +462,13 @@ function startRound(){
   $('replay_actBtn').disabled=true;$('replay_restartBtn').style.display='none';
   updateHUD();
   $('replay_clockFill').style.width='100%';$('replay_hTr').textContent='--';
+  if(sequence.length===0){
+    // The very first round of a new run — starts the clock here,
+    // not at launchGame(), since any time spent reading the intro
+    // screen or getting ready shouldn't count toward how fast the
+    // level was actually reached.
+    runStartTime=performance.now();
+  }
   if(gameMode==='training'){
     // Training plays at one fixed, selected level throughout — a
     // fresh sequence each round, same as before.
@@ -564,7 +571,8 @@ function endGame(wrongIdx){
       // Standalone practice — a miss genuinely ends the round right
       // here. Brief "missed" notice, then straight back to the hub,
       // no in-page "Play Again" screen to linger on.
-      recordLevelToStandings(currentPlayerName,g.best);
+      recordLevelToStandings(currentPlayerName,g.best,(performance.now()-runStartTime)/1000);
+      sessionStorage.setItem('hoop-last-quarter-key',THIS_GAME_KEY);
       timers.push(setTimeout(function(){
         msg('MISSED — TRY AGAIN','rby-miss');
         timers.push(setTimeout(function(){
@@ -583,7 +591,7 @@ function showFinalScore(){
     msg(g.roundsDone+'/'+TRAINING_ROUNDS+' — LEVEL '+trainingLevel+' · SCORE '+g.sc,'rby-miss');
   }else{
     msg('GAME OVER — SCORE '+g.sc+' ('+bpm+' BPM · BEST '+g.best+' CELLS)','rby-miss');
-    recordLevelToStandings(currentPlayerName,g.best);
+    recordLevelToStandings(currentPlayerName,g.best,(performance.now()-runStartTime)/1000);
   }
   $('replay_actBtn').textContent="PLAY AGAIN";$('replay_actBtn').onclick=restartGame;$('replay_actBtn').disabled=false;
   $('replay_restartBtn').style.display='none';
