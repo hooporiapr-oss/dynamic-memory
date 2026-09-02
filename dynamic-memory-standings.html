@@ -244,7 +244,10 @@ function renderForTab(tabKey){
   }
 }
 
-renderForTab('fullgame');
+var lastQuarter=sessionStorage.getItem('hoop-last-quarter-key');
+var validKeys=STANDINGS_TABS.map(function(t){return t.key});
+var defaultTab=(lastQuarter&&validKeys.indexOf(lastQuarter)!==-1)?lastQuarter:'fullgame';
+renderForTab(defaultTab);
 $('refreshBtn').addEventListener('click', function(){renderForTab(currentTab)});
 $('exitBtn').addEventListener('click', function(){
   window.location.href = 'dynamic-hub.html';
