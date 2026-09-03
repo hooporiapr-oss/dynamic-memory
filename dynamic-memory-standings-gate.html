@@ -80,8 +80,17 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 var PRODUCT = 'hooporia-standings';
 // ══════════════════════════════════════════════════════
 
+// A game's own Standings button links here with its own ?tab=
+// param, so the correct board still opens after the gate — this
+// reads it once and reuses it on every redirect below, rather than
+// letting it get silently dropped along the way.
+var requestedTab = new URLSearchParams(window.location.search).get('tab');
+function standingsUrl(){
+  return requestedTab ? 'dynamic-memory-standings.html?tab=' + encodeURIComponent(requestedTab) : 'dynamic-memory-standings.html';
+}
+
 if (sessionStorage.getItem('dynamic-memory-standings-gate-pass') === '1') {
-  window.location.replace('dynamic-memory-standings.html');
+  window.location.replace(standingsUrl());
 }
 
 function tryEnter(){
@@ -116,7 +125,7 @@ function tryEnter(){
     sessionStorage.setItem('dynamic-memory-standings-gate-pass','1');
     sessionStorage.setItem('hoop-standings-license', input.toUpperCase());
     sessionStorage.setItem('hoop-school', lic.school_name || '');
-    window.location.href = 'dynamic-memory-standings.html';
+    window.location.href = standingsUrl();
   })
   .catch(function(){
     reject('Connection problem — please try again');
