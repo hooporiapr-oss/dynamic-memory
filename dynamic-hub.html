@@ -99,7 +99,6 @@ body{
   display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
   max-width:640px;margin:0 auto 22px;
 }
-.quarter-card:last-child:nth-child(odd){grid-column:1/-1}
 .quarter-card{
   display:block;text-decoration:none;padding:14px 12px;border-radius:14px;
   border:1.5px solid rgba(124,58,237,.35);background:rgba(124,58,237,.08);
@@ -179,11 +178,11 @@ footer{
         <div class="quarter-num">Q3</div>
         <div class="quarter-name">Read the Defense</div>
       </a>
+      <a class="quarter-card" href="dynamic-memory-standings.html">
+        <div class="quarter-num">🏆</div>
+        <div class="quarter-name">View Standings</div>
+      </a>
     </div>
-
-    <a href="dynamic-memory-standings.html" style="margin:0 auto 12px;padding:12px 18px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;max-width:400px">
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1.5px;color:#c9a3fa">🏆 View Standings</span>
-    </a>
 
     <footer>Gostar Digital LLC</footer>
   </div>
