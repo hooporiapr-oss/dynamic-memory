@@ -45,8 +45,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 .sd-cell{text-align:center;padding:8px 4px;border-radius:8px;background:rgba(255,255,255,.04)}
 .sd-label{font-size:.56rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#8892a0;margin-bottom:3px}
 .sd-val{font-size:.95rem;font-weight:900;color:#fff}
-.sd-final{text-align:center;padding:0 12px 14px;font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8892a0}
-.sd-final b{color:#fff;font-size:1rem;margin-left:6px}
 .standings-wrap{width:100%;display:flex;flex-direction:column;align-items:center}
 
 #exitBtn{
@@ -63,7 +61,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   <button class="box-back-btn" id="refreshBtn" type="button">🔄 Refresh</button>
   <button id="exitBtn" type="button">Exit →</button>
   <div class="box-title">THE <span>STANDINGS</span></div>
-  <div class="box-sub" id="boxSub">Full Game — 4 Quarters · Best Total Score Per Player</div>
+  <div class="box-sub" id="boxSub">Play Call · Best Level Achieved Per Player</div>
 
   <div class="standings-tab-row" id="standingsTabRow"></div>
 
@@ -81,15 +79,12 @@ function $(id){return document.getElementById(id)}
 var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
 
-// The Full Game keeps its own, existing table — a genuinely
-// different metric (the combined 4-quarter total) from the four
-// individual games below, which all now share one table and score
-// by level_achieved, since each escalates by exactly one flash per
-// successful round. The database keeps the real, raw level — the
-// ×10-per-level points conversion happens only here, at display
-// time, so the underlying data stays honest and the "10 points per
-// level" framing stays a presentation choice, not a stored fact.
-var FULL_GAME_TABLE='hooporia_4qtr_standings';
+// All four games share one table and score by level_achieved,
+// since each escalates by exactly one flash per successful round.
+// The database keeps the real, raw level — the ×10-per-level points
+// conversion happens only here, at display time, so the underlying
+// data stays honest and the "10 points per level" framing stays a
+// presentation choice, not a stored fact.
 var QUARTER_TABLE='dynamic_memory_quarter_standings';
 var POINTS_PER_LEVEL=10;
 
@@ -97,27 +92,9 @@ var STANDINGS_TABS=[
   {key:'recall',label:'Play Call'},
   {key:'reflex',label:'Shot Map'},
   {key:'replay',label:'Pass Path'},
-  {key:'recognition',label:'Read the Defense'},
-  {key:'fullgame',label:'Full Game'}
+  {key:'recognition',label:'Read the Defense'}
 ];
-var currentTab='fullgame';
-
-function fetchFullGameStandings(){
-  var school=sessionStorage.getItem('hoop-school')||'';
-  var url=SB_URL+'/rest/v1/'+FULL_GAME_TABLE+'?select=player_name,q1_score,q2_score,q3_score,q4_score,total_score&order=total_score.desc&school_name=eq.'+encodeURIComponent(school);
-  return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
-    .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
-    .then(function(rows){
-      var best={};
-      (rows||[]).forEach(function(r){
-        var existing=best[r.player_name];
-        if(!existing||r.total_score>existing.total){
-          best[r.player_name]={name:r.player_name,q1:r.q1_score,q2:r.q2_score,q3:r.q3_score,q4:r.q4_score,total:r.total_score};
-        }
-      });
-      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return b.total-a.total});
-    });
-}
+var currentTab='recall';
 
 function fetchQuarterStandings(gameKey){
   var school=sessionStorage.getItem('hoop-school')||'';
@@ -174,74 +151,39 @@ function renderForTab(tabKey){
   var listEl=$('standingsList');
   listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
 
-  if(tabKey==='fullgame'){
-    $('boxSub').textContent=tabConfig.label+' · Best Total Score Per Player';
-    $('standingsHeader').className='standings-row-header';
-    $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Total</span><span></span>';
-    fetchFullGameStandings().then(function(ranked){
-      if(!ranked.length){
-        listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
-        return;
-      }
-      listEl.innerHTML=ranked.map(function(p,i){
-        var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
-        var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        return '<div class="standings-row '+rankClass+'">'
-          +'<div class="standings-row-main">'
-            +'<span class="sr-rank">'+(i+1)+'</span>'
-            +'<span class="sr-name">'+safeName+'</span>'
-            +'<span class="sr-total">'+p.total+'</span>'
-            +'<span class="sr-chevron">▼</span>'
-          +'</div>'
-          +'<div class="standings-detail"><div class="standings-detail-inner">'
-            +'<div class="sd-cell"><div class="sd-label">Play Call</div><div class="sd-val">'+p.q1+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">Shot Map</div><div class="sd-val">'+p.q2+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">Pass Path</div><div class="sd-val">'+p.q3+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">Read Defense</div><div class="sd-val">'+p.q4+'</div></div>'
-          +'</div><div class="sd-final">Final Score<b>'+p.total+'</b></div></div>'
-          +'</div>';
-      }).join('');
-      listEl.querySelectorAll('.standings-row').forEach(function(row){
-        row.addEventListener('click',function(){row.classList.toggle('open')});
-      });
-    }).catch(function(){
-      listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
+  $('boxSub').textContent=tabConfig.label+' · Best Level Achieved Per Player';
+  $('standingsHeader').className='standings-row-header';
+  $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Score</span><span></span>';
+  fetchQuarterStandings(tabKey).then(function(ranked){
+    if(!ranked.length){
+      listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
+      return;
+    }
+    listEl.innerHTML=ranked.map(function(p,i){
+      var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+      var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      var levelDisplay='Level '+p.level;
+      var timeDisplay=p.time==null?'--':p.time.toFixed(2)+' seconds';
+      return '<div class="standings-row '+rankClass+'">'
+        +'<div class="standings-row-main">'
+          +'<span class="sr-rank">'+(i+1)+'</span>'
+          +'<span class="sr-name">'+safeName+'</span>'
+          +'<span class="sr-total">'+levelDisplay+'</span>'
+          +'<span class="sr-chevron">▼</span>'
+        +'</div>'
+        +'<div class="standings-detail"><div class="standings-detail-inner single">'
+          +'<div class="sd-cell"><div class="sd-label">Speed</div><div class="sd-val">'+timeDisplay+'</div></div>'
+        +'</div></div>'
+        +'</div>';
+    }).join('');
+    // Each row toggles its own detail open/closed — one player's
+    // speed expanding shouldn't affect any other row on the board.
+    listEl.querySelectorAll('.standings-row').forEach(function(row){
+      row.addEventListener('click',function(){row.classList.toggle('open')});
     });
-  }else{
-    $('boxSub').textContent=tabConfig.label+' · Best Level Achieved Per Player';
-    $('standingsHeader').className='standings-row-header';
-    $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Score</span><span></span>';
-    fetchQuarterStandings(tabKey).then(function(ranked){
-      if(!ranked.length){
-        listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
-        return;
-      }
-      listEl.innerHTML=ranked.map(function(p,i){
-        var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
-        var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        var levelDisplay='Level '+p.level;
-        var timeDisplay=p.time==null?'--':p.time.toFixed(2)+' seconds';
-        return '<div class="standings-row '+rankClass+'">'
-          +'<div class="standings-row-main">'
-            +'<span class="sr-rank">'+(i+1)+'</span>'
-            +'<span class="sr-name">'+safeName+'</span>'
-            +'<span class="sr-total">'+levelDisplay+'</span>'
-            +'<span class="sr-chevron">▼</span>'
-          +'</div>'
-          +'<div class="standings-detail"><div class="standings-detail-inner single">'
-            +'<div class="sd-cell"><div class="sd-label">Speed</div><div class="sd-val">'+timeDisplay+'</div></div>'
-          +'</div></div>'
-          +'</div>';
-      }).join('');
-      // Each row toggles its own detail open/closed — one player's
-      // speed expanding shouldn't affect any other row on the board.
-      listEl.querySelectorAll('.standings-row').forEach(function(row){
-        row.addEventListener('click',function(){row.classList.toggle('open')});
-      });
-    }).catch(function(){
-      listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
-    });
-  }
+  }).catch(function(){
+    listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
+  });
 }
 
 var validKeys=STANDINGS_TABS.map(function(t){return t.key});
@@ -251,7 +193,7 @@ var validKeys=STANDINGS_TABS.map(function(t){return t.key});
 // about which board the player actually meant to open.
 var urlTab=new URLSearchParams(window.location.search).get('tab');
 var lastQuarter=sessionStorage.getItem('hoop-last-quarter-key');
-var defaultTab='fullgame';
+var defaultTab='recall';
 if(urlTab&&validKeys.indexOf(urlTab)!==-1){
   defaultTab=urlTab;
 }else if(lastQuarter&&validKeys.indexOf(lastQuarter)!==-1){
