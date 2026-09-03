@@ -93,28 +93,8 @@ body{
   color:#7c3aed;
   margin-bottom:18px;
 }
-.fullgame-btn{
-  display:block;
-  width:100%;
-  max-width:440px;
-  margin:0 auto 26px;
-  padding:16px 20px;
-  border:none;
-  border-radius:16px;
-  background:linear-gradient(135deg,#7c3aed,#a855f7);
-  color:#fff;
-  font-size:.95rem;
-  font-weight:900;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  cursor:pointer;
-  box-shadow:0 0 40px rgba(124,58,237,.6);
-}
-.fullgame-btn:active{transform:scale(.98)}
-
 /* Individual quarter cards — standalone practice for any one of the
-   4 games, sitting above the full-game button so a player can drill
-   a specific quarter before (or instead of) running the whole chain. */
+   4 games. */
 .quarters-label{
   font-size:.68rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;
   color:#7d7268;margin-bottom:12px;
@@ -177,26 +157,6 @@ footer{
   font-weight:900;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(4px);text-decoration:none;
   display:inline-block;
 }
-
-/* Name entry — required before every full-game run, since the
-   standings on the final score screen only mean something if every
-   entry is honestly attributed to a real player. */
-#screen-name-entry{
-  position:fixed;inset:0;z-index:50;display:none;flex-direction:column;
-  align-items:center;justify-content:center;background:#000;padding:24px;text-align:center;
-}
-.name-entry-title{
-  font-size:1.5rem;font-weight:900;font-style:italic;letter-spacing:.03em;
-  text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(124,58,237,.6);
-}
-.name-entry-title span{color:#7c3aed}
-.name-entry-sub{font-size:.85rem;color:#c9b8a8;line-height:1.5;max-width:400px;margin-bottom:26px}
-.name-input{
-  width:100%;max-width:400px;padding:16px;border-radius:14px;border:2px solid rgba(124,58,237,.4);
-  background:rgba(255,255,255,.06);color:#fff;font-size:1.2rem;font-weight:900;
-  letter-spacing:.02em;text-align:center;font-family:Arial,sans-serif;margin-bottom:16px;
-}
-.name-input:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 24px rgba(124,58,237,.35)}
 </style>
 </head>
 <body>
@@ -234,8 +194,6 @@ footer{
       </a>
     </div>
 
-    <button class="fullgame-btn" id="fullGameBtn">🏀 PLAY THE FULL GAME</button>
-
     <a href="dynamic-memory-standings.html" style="margin:0 auto 12px;padding:12px 18px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;max-width:400px">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1.5px;color:#c9a3fa">🏆 View Standings</span>
     </a>
@@ -244,13 +202,6 @@ footer{
   </div>
 </div>
 
-<div id="screen-name-entry">
-  <div class="name-entry-title">WHO'S <span>PLAYING?</span></div>
-  <div class="name-entry-sub">Enter your name to take the court. Your final score gets tracked on your school's own standings board.</div>
-  <input type="text" id="playerNameInput" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
-  <button class="fullgame-btn" id="nameContinueBtn" style="max-width:400px">▶ Continue</button>
-  <a href="dynamic-memory-standings.html" class="back-btn" style="margin-top:6px">🏆 View Standings</a>
-</div>
 <script>
 (function(){
 var soundBtn=document.getElementById('soundToggle');
@@ -283,59 +234,6 @@ document.getElementById('switchProgramBtn').addEventListener('click',function(){
   sessionStorage.removeItem('hoop-license');
   sessionStorage.removeItem('hoop-school');
   window.location.href='index.html';
-});
-
-// Starts a real, tracked four-quarter run — a fresh scoreboard, and a
-// flag each quarter game checks for on its own end screen. Standalone
-// play (clicking straight into any single quarter from this page)
-// never sets this, so nothing changes for solo practice.
-function showNameEntry(){
-  document.getElementById('stage').style.display='none';
-  document.getElementById('screen-name-entry').style.display='flex';
-  setTimeout(function(){document.getElementById('playerNameInput').focus()},50);
-}
-document.getElementById('fullGameBtn').addEventListener('click',showNameEntry);
-
-// Reached from another game's own "Full Game" switcher slot — skips
-// the hub view entirely and goes straight to naming a player, the
-// same starting point every other switcher slot already lands on.
-if(new URLSearchParams(window.location.search).get('fullgame')==='1'){
-  showNameEntry();
-}
-
-document.getElementById('nameContinueBtn').addEventListener('click',function(){
-  var name=document.getElementById('playerNameInput').value.trim();
-  if(!name){
-    var input=document.getElementById('playerNameInput');
-    input.focus();
-    input.style.borderColor='#ff1e3c';
-    setTimeout(function(){input.style.borderColor=''},600);
-    return;
-  }
-  sessionStorage.setItem('hoop-player-name',name.slice(0,20));
-  sessionStorage.setItem('hoop-fullgame-active','1');
-  sessionStorage.setItem('hoop-quarter-scores',JSON.stringify({q1:0,q2:0,q3:0,q4:0}));
-
-  // Requested here — the last genuine, direct user click before
-  // quarter 1 — so fullscreen starts right as the player commits to
-  // the full game, then persists automatically across all four
-  // quarters' own page navigations (each game's own launchGame()
-  // checks !document.fullscreenElement first, so it's a safe no-op
-  // once already in fullscreen). Navigation is genuinely held until
-  // the fullscreen promise settles (success or failure) — firing it
-  // and immediately navigating away in the same tick can cut the
-  // transition off before the browser finishes it.
-  var goToQ1=function(){window.location.href='dynamic-memory-recall.html'};
-  try{
-    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-      document.documentElement.requestFullscreen().then(goToQ1).catch(goToQ1);
-    }else{
-      goToQ1();
-    }
-  }catch(e){goToQ1()}
-});
-document.getElementById('playerNameInput').addEventListener('keydown',function(e){
-  if(e.key==='Enter')document.getElementById('nameContinueBtn').click();
 });
 })();
 </script>
