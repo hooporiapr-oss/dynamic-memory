@@ -244,9 +244,19 @@ function renderForTab(tabKey){
   }
 }
 
-var lastQuarter=sessionStorage.getItem('hoop-last-quarter-key');
 var validKeys=STANDINGS_TABS.map(function(t){return t.key});
-var defaultTab=(lastQuarter&&validKeys.indexOf(lastQuarter)!==-1)?lastQuarter:'fullgame';
+// An explicit ?tab= param — set by a specific game's own Standings
+// button on its intro screen — always wins over the session-based
+// "last played" memory, since it's a direct, unambiguous signal
+// about which board the player actually meant to open.
+var urlTab=new URLSearchParams(window.location.search).get('tab');
+var lastQuarter=sessionStorage.getItem('hoop-last-quarter-key');
+var defaultTab='fullgame';
+if(urlTab&&validKeys.indexOf(urlTab)!==-1){
+  defaultTab=urlTab;
+}else if(lastQuarter&&validKeys.indexOf(lastQuarter)!==-1){
+  defaultTab=lastQuarter;
+}
 renderForTab(defaultTab);
 $('refreshBtn').addEventListener('click', function(){renderForTab(currentTab)});
 $('exitBtn').addEventListener('click', function(){
