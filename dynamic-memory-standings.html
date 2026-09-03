@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Deliberately no gate-check here — standings is a public, read-only
-     scoreboard, not gameplay, so it opens directly without requiring
-     an access code. -->
+<!-- Standings now genuinely requires its own, separate access code
+     — distinct from gameplay, checked and issued independently. -->
+<script>
+if (sessionStorage.getItem('dynamic-memory-standings-gate-pass') !== '1') {
+  window.location.replace('dynamic-memory-standings-gate.html');
+}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DYNAMIC MEMORY — STANDINGS</title>
