@@ -321,31 +321,18 @@ document.getElementById('nameContinueBtn').addEventListener('click',function(){
   // the full game, then persists automatically across all four
   // quarters' own page navigations (each game's own launchGame()
   // checks !document.fullscreenElement first, so it's a safe no-op
-  // once already in fullscreen).
-  //
-  // Navigation is raced against a short timeout, not held purely on
-  // the fullscreen promise settling — some headset browsers (Pico's
-  // own included) can leave that promise never actually resolving
-  // or rejecting at all, which would otherwise strand the player on
-  // this screen forever with no visible error. Whichever fires
-  // first — the real promise result, or the fallback timer — is
-  // what proceeds, and a second firing is explicitly guarded
-  // against so it can never navigate twice.
+  // once already in fullscreen). Navigation is genuinely held until
+  // the fullscreen promise settles (success or failure) — firing it
+  // and immediately navigating away in the same tick can cut the
+  // transition off before the browser finishes it.
   var goToQ1=function(){window.location.href='dynamic-memory-recall.html'};
-  var navigated=false;
-  var proceedOnce=function(){
-    if(navigated)return;
-    navigated=true;
-    goToQ1();
-  };
   try{
     if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-      document.documentElement.requestFullscreen().then(proceedOnce).catch(proceedOnce);
-      setTimeout(proceedOnce,1200);
+      document.documentElement.requestFullscreen().then(goToQ1).catch(goToQ1);
     }else{
-      proceedOnce();
+      goToQ1();
     }
-  }catch(e){proceedOnce()}
+  }catch(e){goToQ1()}
 });
 document.getElementById('playerNameInput').addEventListener('keydown',function(e){
   if(e.key==='Enter')document.getElementById('nameContinueBtn').click();
