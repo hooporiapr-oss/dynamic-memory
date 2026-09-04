@@ -99,6 +99,7 @@ body{
   display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
   max-width:640px;margin:0 auto 22px;
 }
+.quarter-card:last-child:nth-child(odd){grid-column:1/-1}
 .quarter-card{
   display:block;text-decoration:none;padding:14px 12px;border-radius:14px;
   border:1.5px solid rgba(124,58,237,.35);background:rgba(124,58,237,.08);
@@ -166,16 +167,20 @@ footer{
     <div class="arena-sub">Memory-Based Basketball Challenges</div>
 
     <div class="quarter-grid">
-      <a class="quarter-card" href="dynamic-memory-recall.html">
+      <a class="quarter-card" href="dynamic-memory-the-fortress.html">
         <div class="quarter-num">Q1</div>
+        <div class="quarter-name">The Fortress</div>
+      </a>
+      <a class="quarter-card" href="dynamic-memory-recall.html">
+        <div class="quarter-num">Q2</div>
         <div class="quarter-name">Play Call</div>
       </a>
       <a class="quarter-card" href="dynamic-memory-replay.html">
-        <div class="quarter-num">Q2</div>
+        <div class="quarter-num">Q3</div>
         <div class="quarter-name">Pass Path</div>
       </a>
       <a class="quarter-card" href="dynamic-memory-recognition.html">
-        <div class="quarter-num">Q3</div>
+        <div class="quarter-num">Q4</div>
         <div class="quarter-name">Read the Defense</div>
       </a>
       <a class="quarter-card" href="dynamic-memory-standings.html">
