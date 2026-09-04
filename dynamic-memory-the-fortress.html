@@ -43,23 +43,12 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .final-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:#a7adba;margin-top:10px}
 .next-player-btn{margin-top:28px;height:64px;padding:0 40px;border:none;border-radius:16px;background:linear-gradient(120deg,#7c3aed,#a855f7);color:#fff;font-size:1.15rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(124,58,237,.6)}
 
-/* Quarter-complete notice — a brief, automatic pause between rounds,
-   no button, no navigation risk, same pattern the mobile version of
-   this game already uses. */
-#qtrNotice{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.92);text-align:center;padding:20px}
-#qtrNotice.show{display:flex}
-.qtr-notice-title{font-size:1.8rem;font-weight:900;font-style:italic;letter-spacing:.04em;text-transform:uppercase;color:#a855f7;text-shadow:0 0 40px rgba(124,58,237,.8);margin-bottom:10px}
-.qtr-notice-stats{font-size:1rem;color:#c9b8a8}
-
-/* The four-quarter breakdown — shown always-open on the end screen
-   (the honest, final record of the run), and as a click-to-expand
-   dropdown per row on the standings board (so the list itself stays
-   compact, but every player's own quarters are one tap away). */
-.qtr-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:420px;margin:18px auto}
-.qtr-cell{border-radius:12px;border:2px solid rgba(124,58,237,.35);background:rgba(124,58,237,.06);padding:12px 4px;text-align:center}
-.qtr-cell.qtr-current{border-color:#a855f7;background:rgba(124,58,237,.18);box-shadow:0 0 20px rgba(124,58,237,.5)}
-.qtr-label{font-size:.58rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#c9a3fa;margin-bottom:4px}
-.qtr-val{font-size:1.3rem;font-weight:900;color:#fff}
+/* The final, per-run breakdown on the end screen — level reached
+   and the real elapsed time it took to get there. */
+.final-stats{display:grid;grid-template-columns:1fr;gap:10px;width:100%;max-width:160px;margin:18px auto}
+.final-stat-cell{border-radius:12px;border:2px solid rgba(124,58,237,.35);background:rgba(124,58,237,.06);padding:12px 4px;text-align:center}
+.final-stat-label{font-size:.58rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#c9a3fa;margin-bottom:4px}
+.final-stat-val{font-size:1.3rem;font-weight:900;color:#fff}
 
 /* ══════════════════════════════════════════════════════
    GAMEPLAY SCREEN — the key drawn as a real free-throw lane, the
@@ -73,7 +62,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .top-box{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:5px 14px;text-align:center;min-width:70px}
 .top-label{font-size:.55rem;color:#a7adba;text-transform:uppercase;letter-spacing:.06em}
 .top-val{font-size:1.3rem;font-weight:900}
-#hLevel{color:#fff}#hScore{color:#ffd35a}#hBest{color:#c9a3fa}
+#hLevel{color:#fff}#hBest{color:#c9a3fa}#hTime{color:#ffd35a}
 
 #msg{text-align:center;padding:6px;font-size:1.15rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0}
 #msg.watch{color:#a855f7}#msg.go{color:#ffd35a}#msg.miss{color:#ff1e3c}
@@ -104,7 +93,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <a class="intro-back" href="dynamic-hub.html">← Home</a>
   <div class="vrr-sub">Dynamic Memory · The 2-1-2 Zone</div>
   <div class="vrr-title">THE <span>FORTRESS</span></div>
-  <div class="rule-t"><b>Five basketballs, set in a real 2-1-2 zone, fixed in place.</b> Watch the chain light up inside the key, then repeat it back in the same order. Every round the chain adds one more ball. Four quarters, one wrong tap ends each — your final score is the total across all four.</div>
+  <div class="rule-t"><b>Five basketballs, set in a real 2-1-2 zone, fixed in place.</b> Watch the chain light up inside the key, then repeat it back — at your own pace, any speed. Every round the chain adds one more ball. One wrong tap ends the run — your score is the longest chain you held.</div>
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
   <button class="big-btn" id="bigStart" onclick="handleStartClick()">▶ START</button>
   <a class="box-open-btn" href="dynamic-memory-standings-gate.html?tab=fortress" style="display:block;margin:6px auto 0;text-decoration:none;text-align:center;line-height:52px">🏆 THE STANDINGS</a>
@@ -114,22 +103,13 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 <!-- COUNTDOWN -->
 <div id="countdown"><div id="bigCount">3</div></div>
 
-<!-- QUARTER COMPLETE — brief, automatic, no button -->
-<div id="qtrNotice">
-  <div>
-    <div class="qtr-notice-title" id="qtrNoticeTitle">1ST QUARTER COMPLETE!</div>
-    <div class="qtr-notice-stats" id="qtrNoticeStats">Score: 0</div>
-  </div>
-</div>
-
 <!-- GAMEPLAY -->
 <div id="screen-game">
   <div id="flash"></div>
   <div class="topbar">
-    <div class="top-box"><div class="top-label">Quarter</div><div class="top-val" id="hQtr">1</div></div>
     <div class="top-box"><div class="top-label">Level</div><div class="top-val" id="hLevel">0</div></div>
-    <div class="top-box"><div class="top-label">Score</div><div class="top-val" id="hScore">0</div></div>
     <div class="top-box"><div class="top-label">Best</div><div class="top-val" id="hBest">0</div></div>
+    <div class="top-box"><div class="top-label">Time</div><div class="top-val" id="hTime">0.0</div></div>
   </div>
   <div id="msg" class="watch"></div>
   <div class="court-wrap">
@@ -154,12 +134,9 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 <!-- END -->
 <div id="screen-end">
   <div class="final-num" id="endNum">0</div>
-  <div class="final-label">Final Score</div>
-  <div class="qtr-board" id="qtrBoard">
-    <div class="qtr-cell" id="qtrCell1"><div class="qtr-label">1st</div><div class="qtr-val" id="qtrVal1">0</div></div>
-    <div class="qtr-cell" id="qtrCell2"><div class="qtr-label">2nd</div><div class="qtr-val" id="qtrVal2">0</div></div>
-    <div class="qtr-cell" id="qtrCell3"><div class="qtr-label">3rd</div><div class="qtr-val" id="qtrVal3">0</div></div>
-    <div class="qtr-cell" id="qtrCell4"><div class="qtr-label">4th</div><div class="qtr-val" id="qtrVal4">0</div></div>
+  <div class="final-label">Longest Chain Held</div>
+  <div class="final-stats" id="finalStats">
+    <div class="final-stat-cell"><div class="final-stat-label">Time</div><div class="final-stat-val" id="endTime">0.0s</div></div>
   </div>
   <a class="box-open-btn" href="dynamic-memory-standings-gate.html?tab=fortress" style="max-width:280px;margin:6px auto 0;display:block;text-decoration:none;text-align:center;line-height:52px">🏆 THE STANDINGS</a>
   <button class="next-player-btn" id="nextPlayerBtn">▶ NEXT PLAYER</button>
@@ -192,12 +169,18 @@ var LAYOUT=[
 
 var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
-var SB_TABLE='dynamic_memory_fortress_standings';
-function recordScoreToStandings(name,q1,q2,q3,q4,total,timeSeconds){
+// Standings — the same shared table every other Dynamic Memory game
+// now uses (game_key filters per tab), rather than a separate table.
+// That separate table only ever made sense for the old 4-quarter
+// breakdown shape; as one continuous run scored by level_achieved,
+// this fits the shared shape exactly like the other three games.
+var SB_TABLE='dynamic_memory_quarter_standings';
+var THIS_GAME_KEY='fortress';
+function recordScoreToStandings(name,levelAchieved,timeSeconds){
   return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,q1_score:q1,q2_score:q2,q3_score:q3,q4_score:q4,total_score:total,time_seconds:(timeSeconds===undefined?null:timeSeconds),school_name:sessionStorage.getItem('hoop-school')||null})
+    body:JSON.stringify({player_name:name,game_key:THIS_GAME_KEY,level_achieved:levelAchieved,time_seconds:(timeSeconds===undefined?null:timeSeconds),school_name:sessionStorage.getItem('hoop-school')||null})
   }).catch(function(){});
 }
 $('nextPlayerBtn').addEventListener('click',function(){
@@ -213,13 +196,10 @@ var phase='idle';
 var sequence=[];
 var playerIdx=0;
 var level=0;
-var score=0;
 var best=0;
 var timers=[];
 var targetEls=[];
 var currentPlayerName='';
-var currentQuarter=1;
-var quarterScores=[0,0,0,0];
 var runStartTime=0;
 
 function clrT(){timers.forEach(clearTimeout);timers=[]}
@@ -322,7 +302,6 @@ function startDrill(){
   ensureAudio();
   if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
-  currentQuarter=1;quarterScores=[0,0,0,0];
   $('screen-intro').style.display='none';
   $('screen-game').style.display='flex';
   buildBoard();
@@ -340,12 +319,17 @@ function showCountdownThen(cb){
 }
 
 function runDrill(){
-  phase='running';sequence=[];playerIdx=0;level=0;score=0;
-  if(currentQuarter===1)runStartTime=performance.now();
-  $('hQtr').textContent=currentQuarter;
-  $('hLevel').textContent='0';$('hScore').textContent='0';
+  phase='running';sequence=[];playerIdx=0;level=0;
+  runStartTime=performance.now();
+  $('hLevel').textContent='0';$('hTime').textContent='0.0';
   msg('GET READY...','go');
   timers.push(setTimeout(startLevel,900));
+  requestAnimationFrame(updateTimerDisplay);
+}
+function updateTimerDisplay(){
+  if(phase!=='running')return;
+  $('hTime').textContent=((performance.now()-runStartTime)/1000).toFixed(1);
+  requestAnimationFrame(updateTimerDisplay);
 }
 
 function startLevel(){
@@ -386,8 +370,6 @@ function handleTargetTap(idx){
     setTimeout(function(){unlightTarget(idx)},220);
     playerIdx++;
     if(playerIdx>=sequence.length){
-      score=level;
-      $('hScore').textContent=score;
       setReady(false);
       msg('✅ HELD THE FORTRESS','go');
       timers.push(setTimeout(startLevel,LEVEL_PAUSE_MS));
@@ -401,49 +383,22 @@ function handleTargetTap(idx){
 function endDrill(){
   if(phase==='done')return;
   phase='done';clrT();setReady(false);
-  quarterScores[currentQuarter-1]=score;
+  var finalLevel=level;
+  var finalTime=(performance.now()-runStartTime)/1000;
 
   msg('FORTRESS BROKEN','miss');
   timers.push(setTimeout(function(){
-    if(currentQuarter<4){
-      showQuarterNotice();
-    }else{
-      showFullGameFinal();
-    }
+    showFinalScore(finalLevel,finalTime);
   },700));
 }
 
-var QTR_LABELS=['1ST','2ND','3RD','4TH'];
+function showFinalScore(finalLevel,finalTime){
+  var isNewBest=finalLevel>best;
+  if(isNewBest){best=finalLevel;saveBest()}
+  recordScoreToStandings(currentPlayerName,finalLevel,finalTime);
 
-// Quarters 1-3 — a brief, automatic notice, no button, no navigation
-// risk. The same escalating-sequence loop restarts fresh for the
-// next quarter after a short pause.
-function showQuarterNotice(){
-  $('qtrNoticeTitle').textContent=QTR_LABELS[currentQuarter-1]+' QUARTER COMPLETE!';
-  $('qtrNoticeStats').textContent='Score: '+score;
-  $('qtrNotice').classList.add('show');
-  timers.push(setTimeout(function(){
-    $('qtrNotice').classList.remove('show');
-    currentQuarter++;
-    phase='idle';
-    showCountdownThen(runDrill);
-  },2500));
-}
-
-// Quarter 4 — the real, tracked end. Full Q1-Q4 breakdown, the total
-// saved to the standings board.
-function showFullGameFinal(){
-  var total=quarterScores[0]+quarterScores[1]+quarterScores[2]+quarterScores[3];
-  var finalTime=(performance.now()-runStartTime)/1000;
-  var isNewBest=total>best;
-  if(isNewBest){best=total;saveBest()}
-  recordScoreToStandings(currentPlayerName,quarterScores[0],quarterScores[1],quarterScores[2],quarterScores[3],total,finalTime);
-
-  $('endNum').textContent=total;
-  for(var i=1;i<=4;i++){
-    $('qtrVal'+i).textContent=quarterScores[i-1];
-    $('qtrCell'+i).classList.toggle('qtr-current',i===4);
-  }
+  $('endNum').textContent=finalLevel;
+  $('endTime').textContent=finalTime.toFixed(1)+'s';
   $('screen-game').style.display='none';
   $('screen-end').style.display='flex';
 }
