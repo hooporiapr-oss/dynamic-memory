@@ -65,7 +65,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   <button class="box-back-btn" id="refreshBtn" type="button">🔄 Refresh</button>
   <button id="exitBtn" type="button">Exit →</button>
   <div class="box-title">THE <span>STANDINGS</span></div>
-  <div class="box-sub" id="boxSub">The Fortress · Best Total Score Per Player</div>
+  <div class="box-sub" id="boxSub">The Fortress · Best Level Achieved Per Player</div>
 
   <div class="standings-tab-row" id="standingsTabRow"></div>
 
@@ -99,28 +99,6 @@ var STANDINGS_TABS=[
   {key:'recognition',label:'Read the Defense'}
 ];
 var currentTab='fortress';
-
-// The Fortress keeps its own, separate table — a genuinely different
-// score shape (a real 4-quarter breakdown plus a combined total) from
-// the other three games, which all share one table and score by a
-// single level_achieved instead.
-var FORTRESS_TABLE='dynamic_memory_fortress_standings';
-function fetchFortressStandings(){
-  var school=sessionStorage.getItem('hoop-school')||'';
-  var url=SB_URL+'/rest/v1/'+FORTRESS_TABLE+'?select=player_name,q1_score,q2_score,q3_score,q4_score,total_score,time_seconds&school_name=eq.'+encodeURIComponent(school);
-  return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
-    .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
-    .then(function(rows){
-      var best={};
-      (rows||[]).forEach(function(r){
-        var existing=best[r.player_name];
-        if(!existing||r.total_score>existing.total){
-          best[r.player_name]={name:r.player_name,q1:r.q1_score,q2:r.q2_score,q3:r.q3_score,q4:r.q4_score,total:r.total_score,time:r.time_seconds};
-        }
-      });
-      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return b.total-a.total});
-    });
-}
 
 function fetchQuarterStandings(gameKey){
   var school=sessionStorage.getItem('hoop-school')||'';
@@ -176,44 +154,6 @@ function renderForTab(tabKey){
   renderTabs();
   var listEl=$('standingsList');
   listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
-
-  if(tabKey==='fortress'){
-    $('boxSub').textContent='The Fortress · Best Total Score Per Player';
-    $('standingsHeader').className='standings-row-header';
-    $('standingsHeader').innerHTML='<span></span><span style="text-align:left">Player</span><span style="text-align:right">Total</span><span></span>';
-    fetchFortressStandings().then(function(ranked){
-      if(!ranked.length){
-        listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
-        return;
-      }
-      listEl.innerHTML=ranked.map(function(p,i){
-        var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
-        var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        var timeDisplay=p.time==null?'--':p.time.toFixed(2)+'s';
-        return '<div class="standings-row '+rankClass+'">'
-          +'<div class="standings-row-main">'
-            +'<span class="sr-rank">'+(i+1)+'</span>'
-            +'<span class="sr-name">'+safeName+'</span>'
-            +'<span class="sr-total">'+p.total+'</span>'
-            +'<span class="sr-chevron">▼</span>'
-          +'</div>'
-          +'<div class="standings-detail"><div class="standings-detail-inner" style="grid-template-columns:repeat(5,1fr)">'
-            +'<div class="sd-cell"><div class="sd-label">1st</div><div class="sd-val">'+p.q1+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">2nd</div><div class="sd-val">'+p.q2+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">3rd</div><div class="sd-val">'+p.q3+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">4th</div><div class="sd-val">'+p.q4+'</div></div>'
-            +'<div class="sd-cell"><div class="sd-label">Speed</div><div class="sd-val">'+timeDisplay+'</div></div>'
-          +'</div></div>'
-          +'</div>';
-      }).join('');
-      listEl.querySelectorAll('.standings-row').forEach(function(row){
-        row.addEventListener('click',function(){row.classList.toggle('open')});
-      });
-    }).catch(function(){
-      listEl.innerHTML='<div class="box-empty">Could not load standings right now — try again in a moment.</div>';
-    });
-    return;
-  }
 
   $('boxSub').textContent=tabConfig.label+' · Best Level Achieved Per Player';
   $('standingsHeader').className='standings-row-header';
