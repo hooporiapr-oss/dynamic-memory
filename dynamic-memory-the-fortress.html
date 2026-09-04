@@ -107,7 +107,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <div class="rule-t"><b>Five basketballs, set in a real 2-1-2 zone, fixed in place.</b> Watch the chain light up inside the key, then repeat it back in the same order. Every round the chain adds one more ball. Four quarters, one wrong tap ends each — your final score is the total across all four.</div>
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
   <button class="big-btn" id="bigStart" onclick="handleStartClick()">▶ START</button>
-  <a class="box-open-btn" href="dynamic-memory-standings-gate.html?tab=fortress" style="display:block;text-decoration:none;text-align:center;line-height:52px">🏆 THE STANDINGS</a>
+  <a class="box-open-btn" href="dynamic-memory-standings-gate.html?tab=fortress" style="display:block;margin:6px auto 0;text-decoration:none;text-align:center;line-height:52px">🏆 THE STANDINGS</a>
   <div class="best-line" id="bestLine"></div>
 </div>
 
@@ -161,7 +161,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
     <div class="qtr-cell" id="qtrCell3"><div class="qtr-label">3rd</div><div class="qtr-val" id="qtrVal3">0</div></div>
     <div class="qtr-cell" id="qtrCell4"><div class="qtr-label">4th</div><div class="qtr-val" id="qtrVal4">0</div></div>
   </div>
-  <a class="box-open-btn" href="dynamic-memory-standings-gate.html?tab=fortress" style="max-width:280px;margin-top:6px;display:block;text-decoration:none;text-align:center;line-height:52px">🏆 THE STANDINGS</a>
+  <a class="box-open-btn" href="dynamic-memory-standings-gate.html?tab=fortress" style="max-width:280px;margin:6px auto 0;display:block;text-decoration:none;text-align:center;line-height:52px">🏆 THE STANDINGS</a>
   <button class="next-player-btn" id="nextPlayerBtn">▶ NEXT PLAYER</button>
   <a href="dynamic-hub.html" style="display:block;margin-top:16px;max-width:280px;margin-left:auto;margin-right:auto;text-decoration:none;text-align:center;padding:14px 24px;border-radius:100px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:900;letter-spacing:1px;font-size:.95rem">▶ BACK TO HUB</a>
 </div>
@@ -171,8 +171,8 @@ function $(id){return document.getElementById(id)}
 
 var BEST_KEY='dm-fortress-best';
 var NUM_TARGETS=5;
-var LIGHT_MS=400;
-var GAP_MS=200;
+var LIGHT_MS=333;
+var GAP_MS=167;
 var LEVEL_PAUSE_MS=800;
 
 // Five genuinely distinct ball tints — each is the same basketball
@@ -193,11 +193,11 @@ var LAYOUT=[
 var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
 var SB_TABLE='dynamic_memory_fortress_standings';
-function recordScoreToStandings(name,q1,q2,q3,q4,total){
+function recordScoreToStandings(name,q1,q2,q3,q4,total,timeSeconds){
   return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({player_name:name,q1_score:q1,q2_score:q2,q3_score:q3,q4_score:q4,total_score:total,school_name:sessionStorage.getItem('hoop-school')||null})
+    body:JSON.stringify({player_name:name,q1_score:q1,q2_score:q2,q3_score:q3,q4_score:q4,total_score:total,time_seconds:(timeSeconds===undefined?null:timeSeconds),school_name:sessionStorage.getItem('hoop-school')||null})
   }).catch(function(){});
 }
 $('nextPlayerBtn').addEventListener('click',function(){
@@ -220,6 +220,7 @@ var targetEls=[];
 var currentPlayerName='';
 var currentQuarter=1;
 var quarterScores=[0,0,0,0];
+var runStartTime=0;
 
 function clrT(){timers.forEach(clearTimeout);timers=[]}
 function msg(t,c){var e=$('msg');e.textContent=t;e.className=c||'watch'}
@@ -272,12 +273,54 @@ function buildBoard(){
 }
 window.addEventListener('resize',function(){if($('screen-game').style.display==='flex')buildBoard()});
 
-function lightTarget(idx){targetEls[idx].classList.add('lit')}
+/* Audio — the same synthesized dribble thump used across the rest
+   of the platform (Play Call, Ritnome), not a sample. A low sine
+   sweep gives the thud its body; a short filtered noise burst on
+   top gives it the percussive slap of a ball meeting the floor.
+   Wired into lightTarget() itself, since that single function
+   already covers every real "beat" moment here — both the
+   sequence's own reveal and the player's own correct-tap
+   confirmation. */
+var audioCtx=null;
+function ensureAudio(){ if(!audioCtx){ try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){} } }
+function playThump(){
+  if(!audioCtx)return;
+  var now=audioCtx.currentTime;
+  var osc=audioCtx.createOscillator();
+  var oscGain=audioCtx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(130,now);
+  osc.frequency.exponentialRampToValueAtTime(46,now+0.1);
+  oscGain.gain.setValueAtTime(.001,now);
+  oscGain.gain.exponentialRampToValueAtTime(.85,now+0.006);
+  oscGain.gain.exponentialRampToValueAtTime(.001,now+0.16);
+  osc.connect(oscGain);oscGain.connect(audioCtx.destination);
+  osc.start(now);osc.stop(now+0.17);
+
+  var bufSize=Math.floor(audioCtx.sampleRate*0.035);
+  var buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+  var data=buf.getChannelData(0);
+  for(var i=0;i<bufSize;i++){data[i]=(Math.random()*2-1)*(1-i/bufSize)}
+  var noise=audioCtx.createBufferSource();
+  noise.buffer=buf;
+  var noiseFilter=audioCtx.createBiquadFilter();
+  noiseFilter.type='lowpass';
+  noiseFilter.frequency.value=900;
+  var noiseGain=audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(.22,now);
+  noiseGain.gain.exponentialRampToValueAtTime(.001,now+0.035);
+  noise.connect(noiseFilter);noiseFilter.connect(noiseGain);noiseGain.connect(audioCtx.destination);
+  noise.start(now);
+}
+
+function lightTarget(idx){targetEls[idx].classList.add('lit');playThump()}
 function unlightTarget(idx){targetEls[idx].classList.remove('lit')}
 function setReady(on){targetEls.forEach(function(el){el.classList.toggle('ready',on)})}
 
 function startDrill(){
   if(phase==='running')return;
+  ensureAudio();
+  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
   currentQuarter=1;quarterScores=[0,0,0,0];
   $('screen-intro').style.display='none';
@@ -298,6 +341,7 @@ function showCountdownThen(cb){
 
 function runDrill(){
   phase='running';sequence=[];playerIdx=0;level=0;score=0;
+  if(currentQuarter===1)runStartTime=performance.now();
   $('hQtr').textContent=currentQuarter;
   $('hLevel').textContent='0';$('hScore').textContent='0';
   msg('GET READY...','go');
@@ -390,9 +434,10 @@ function showQuarterNotice(){
 // saved to the standings board.
 function showFullGameFinal(){
   var total=quarterScores[0]+quarterScores[1]+quarterScores[2]+quarterScores[3];
+  var finalTime=(performance.now()-runStartTime)/1000;
   var isNewBest=total>best;
   if(isNewBest){best=total;saveBest()}
-  recordScoreToStandings(currentPlayerName,quarterScores[0],quarterScores[1],quarterScores[2],quarterScores[3],total);
+  recordScoreToStandings(currentPlayerName,quarterScores[0],quarterScores[1],quarterScores[2],quarterScores[3],total,finalTime);
 
   $('endNum').textContent=total;
   for(var i=1;i<=4;i++){
