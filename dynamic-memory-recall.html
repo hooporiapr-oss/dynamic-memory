@@ -426,9 +426,9 @@ function runPreviewRound(){
       demoPattern.forEach(function(idx){cellSt(idx)});
       msg('👁️ CALL IT BACK','watch');
       playPreviewTapBack(demoPattern,0);
-    },900);
+    },1800);
     previewTimers.push(t2);
-  },600);
+  },1100);
   previewTimers.push(t1);
 }
 function playPreviewTapBack(demoPattern,step){
@@ -437,12 +437,12 @@ function playPreviewTapBack(demoPattern,step){
     var t3=setTimeout(function(){
       if(!previewActive)return;
       runPreviewRound();
-    },1600);
+    },2800);
     previewTimers.push(t3);
     return;
   }
   cellSt(demoPattern[step],'correct',step+1);
-  var t4=setTimeout(function(){playPreviewTapBack(demoPattern,step+1)},420);
+  var t4=setTimeout(function(){playPreviewTapBack(demoPattern,step+1)},800);
   previewTimers.push(t4);
 }
 
