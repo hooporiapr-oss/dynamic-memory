@@ -496,30 +496,33 @@ function startPreviewLoop(){
   previewActive=true;
   runPreviewRound();
 }
+// A carefully-crafted, fixed demo pattern — not randomized each
+// loop, so the preview is always clean and readable, never an
+// awkward random draw that happens to look unclear. Two cells,
+// visually spread across the court; the second one moves to a
+// clearly different, nearby cell for the echo.
+var PREVIEW_ORIGINAL=[12,37];
+var PREVIEW_ECHO=[12,43];
+var PREVIEW_CHANGE_POS=1;
+var PREVIEW_CHANGED_CELL=43;
+var PREVIEW_ORIGINAL_CELL=37;
+
 function runPreviewRound(){
   if(!previewActive)return;
   resetCells();
-  var pOriginal=shuffle(Array.from({length:50},(_,i)=>i)).slice(0,2);
-  var pChangePos=Math.floor(Math.random()*2);
-  var pEcho=pOriginal.slice();
-  var pNewCell;
-  do{pNewCell=Math.floor(Math.random()*50)}while(pOriginal.indexOf(pNewCell)!==-1);
-  pEcho[pChangePos]=pNewCell;
-  var pOriginalCell=pOriginal[pChangePos];
-  var pChangedCell=pNewCell;
 
   msg('👁️ WATCH ORIGINAL','rcg-watch');
   var i=0;
   function watchNext(){
     if(!previewActive)return;
-    if(i>0)cellSt(pOriginal[i-1]);
-    if(i<pOriginal.length){
-      cellSt(pOriginal[i],'rcg-lit',i+1);i++;
+    if(i>0)cellSt(PREVIEW_ORIGINAL[i-1]);
+    if(i<PREVIEW_ORIGINAL.length){
+      cellSt(PREVIEW_ORIGINAL[i],'rcg-lit',i+1);i++;
       var t=setTimeout(watchNext,900);previewTimers.push(t);
     }else{
       var t=setTimeout(function(){
         if(!previewActive)return;
-        cellSt(pOriginal[pOriginal.length-1]);
+        cellSt(PREVIEW_ORIGINAL[PREVIEW_ORIGINAL.length-1]);
         msg('👁️ NOW THE ECHO','rcg-echo');
         j=0;echoNext();
       },600);previewTimers.push(t);
@@ -528,28 +531,35 @@ function runPreviewRound(){
   var j=0;
   function echoNext(){
     if(!previewActive)return;
-    if(j>0)cellSt(pEcho[j-1]);
-    if(j<pEcho.length){
-      cellSt(pEcho[j],'rcg-echo-lit',j+1);j++;
+    if(j>0)cellSt(PREVIEW_ECHO[j-1]);
+    if(j<PREVIEW_ECHO.length){
+      cellSt(PREVIEW_ECHO[j],'rcg-echo-lit',j+1);j++;
       var t=setTimeout(echoNext,900);previewTimers.push(t);
     }else{
       var t=setTimeout(function(){
         if(!previewActive)return;
-        cellSt(pEcho[pEcho.length-1]);
-        // A genuine hint beat — names the mechanic, gives the player
-        // a real pause to actually try spotting the change
-        // themselves, before the answer ever gets revealed at all.
-        msg('👁️ ONE SPOT CHANGED — CAN YOU SPOT IT?','rcg-echo');
+        cellSt(PREVIEW_ECHO[PREVIEW_ECHO.length-1]);
+        // A genuine hint beat — every echo cell lights up together,
+        // numbered, genuinely inviting the viewer to scan and try
+        // spotting the changed one themselves, not just a text
+        // message alone.
+        msg('👁️ ONE OF THESE CHANGED — CAN YOU SPOT IT?','rcg-echo');
+        PREVIEW_ECHO.forEach(function(idx,n){cellSt(idx,'rcg-find-target',n+1)});
         var tHint=setTimeout(function(){
           if(!previewActive)return;
           msg('👁️ THIS ONE CHANGED','rcg-perfect');
-          cellSt(pChangedCell,'rcg-correct',pChangePos+1);
+          PREVIEW_ECHO.forEach(function(idx){if(idx!==PREVIEW_CHANGED_CELL)cellSt(idx)});
+          cellSt(PREVIEW_CHANGED_CELL,'rcg-reveal-answer',PREVIEW_CHANGE_POS+1);
+          var tOrig=setTimeout(function(){
+            if(!previewActive)return;
+            cellSt(PREVIEW_ORIGINAL_CELL,'rcg-reveal-original',PREVIEW_CHANGE_POS+1);
+          },400);previewTimers.push(tOrig);
           var t2=setTimeout(function(){
             if(!previewActive)return;
             resetCells();
             runPreviewRound();
-          },2800);previewTimers.push(t2);
-        },2000);previewTimers.push(tHint);
+          },3200);previewTimers.push(t2);
+        },2200);previewTimers.push(tHint);
       },600);previewTimers.push(t);
     }
   }
