@@ -305,6 +305,7 @@ function launchGame(name){
   g.cellCount=getInitialCellCount();g.roundsDone=0;
   buildCourt();updateHUD();
   resizeCourtToFit();
+  startPreviewLoop();
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 $('seqStartBtn').onclick=function(){
@@ -392,6 +393,59 @@ function stopRecallTimer(){if(recallRAF){cancelAnimationFrame(recallRAF);recallR
 var phase='idle',pattern=[],playerIdx=0,timers=[],firstTapDone=false,attemptNum=0,repeatOfferNum=0,runStartTime=0;
 function clrT(){timers.forEach(clearTimeout);timers=[]}
 
+// A live preview, playing directly on the real court itself, right
+// on the game screen, for as long as the player hasn't tapped "Let's
+// Go" yet — the same visual language as actual gameplay (cellSt,
+// the same lit/correct states), not a separate demo court, so what
+// they see here is genuinely what they're about to do. A completely
+// separate, self-contained loop from the real game state (its own
+// pattern, its own timers) so it can never interfere with an actual
+// run, and gets torn down the instant one truly starts.
+var previewTimers=[];
+var previewActive=false;
+function stopPreviewLoop(){
+  previewActive=false;
+  previewTimers.forEach(function(id){clearTimeout(id)});
+  previewTimers=[];
+  resetCells();
+}
+function startPreviewLoop(){
+  previewActive=true;
+  runPreviewRound();
+}
+function runPreviewRound(){
+  if(!previewActive)return;
+  resetCells();
+  msg('👁️ HOW TO PLAY','watch');
+  var demoPattern=shuffle(Array.from({length:50},(_,i)=>i)).slice(0,3);
+  var t1=setTimeout(function(){
+    if(!previewActive)return;
+    demoPattern.forEach(function(idx,n){cellSt(idx,'lit',n+1)});
+    var t2=setTimeout(function(){
+      if(!previewActive)return;
+      demoPattern.forEach(function(idx){cellSt(idx)});
+      msg('👁️ CALL IT BACK','watch');
+      playPreviewTapBack(demoPattern,0);
+    },900);
+    previewTimers.push(t2);
+  },600);
+  previewTimers.push(t1);
+}
+function playPreviewTapBack(demoPattern,step){
+  if(!previewActive)return;
+  if(step>=demoPattern.length){
+    var t3=setTimeout(function(){
+      if(!previewActive)return;
+      runPreviewRound();
+    },1600);
+    previewTimers.push(t3);
+    return;
+  }
+  cellSt(demoPattern[step],'correct',step+1);
+  var t4=setTimeout(function(){playPreviewTapBack(demoPattern,step+1)},420);
+  previewTimers.push(t4);
+}
+
 function revealPattern(cb){
   pattern.forEach(function(idx,n){cellSt(idx,'lit',n+1)});
   var showMs=Math.round(60000/bpm)+((g.cellCount-1)*120);
@@ -411,6 +465,7 @@ function handleFailure(wrongIdx){
 
 function startRound(){
   if(phase!=='idle')return;
+  stopPreviewLoop();
   clrT();phase='showing';playerIdx=0;firstTapDone=false;attemptNum=0;repeatOfferNum=0;
   resetCells();stopFullStrobe();stopRecallTimer();
   $('actBtn').disabled=true;$('restartBtn').style.display='none';
