@@ -8,9 +8,9 @@ if (sessionStorage.getItem('dynamic-memory-gate-pass') !== '1') {
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Play Call | Hooporia</title>
+<title>Recall | Hooporia</title>
 <style>
-/* -- Play Call (embedded, own scope) -- */
+/* -- Recall (embedded, own scope) -- */
 
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -172,7 +172,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 <div id="screen-intro">
   <button style="position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:120" id="seqExitBtn" type="button">← Back</button>
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:420px;margin:16px auto 14px">
-  <button class="big-btn" id="seqStartBtn">▶ PLAY CALL</button>
+  <button class="big-btn" id="seqStartBtn">▶ RECALL</button>
   <a class="standings-btn" href="dynamic-memory-standings-gate.html?tab=recall">🏆 Standings</a>
   <div style="margin-top:24px;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#4a5058">Powered by <a href="https://hooporia.com" target="_blank" rel="noopener" style="color:#8892a0;font-style:italic;text-decoration:underline">Gostar Digital</a></div>
 </div>
@@ -429,7 +429,7 @@ function startRound(){
     var indices=shuffle(Array.from({length:50},(_,i)=>i)).slice(0,g.cellCount);
     pattern=indices;
   }else{
-    // Game mode now matches The Fortress/Pass Path/Read the
+    // Game mode now matches The Fortress/Replay/Read the
     // Defense's own established mechanic — the pattern keeps every
     // earlier position and gets one new, genuinely random cell
     // added each round, rather than being regenerated from
@@ -438,7 +438,7 @@ function startRound(){
     // every round after this still only ever adds exactly one.
     var pushCount=pattern.length===0?2:1;
     for(var pc=0;pc<pushCount;pc++){
-      // Guarded against duplicates specifically — unlike Pass Path's
+      // Guarded against duplicates specifically — unlike Replay's
       // one-at-a-time reveal, this game lights every cell in the
       // pattern at once, each labeled with its own tap-order number.
       // A repeated cell would get labeled twice in that same pass,
