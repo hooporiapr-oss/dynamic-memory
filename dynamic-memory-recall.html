@@ -113,6 +113,10 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .clockbar{height:5px;background:rgba(255,255,255,.08);flex-shrink:0}
 .clockbar-fill{height:100%;background:linear-gradient(90deg,#FF6B35,#ffd35a);transition:width .1s linear}
 .msg-bar{text-align:center;padding:8px;font-size:.9rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
+.countdown-overlay{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);pointer-events:none}
+.countdown-overlay.show{display:flex}
+.countdown-number{font-size:7rem;font-weight:900;color:#FF6B35;text-shadow:0 0 40px #FF6B35,0 0 80px #ffd35a;animation:countdownPop .8s ease-out}
+@keyframes countdownPop{0%{transform:scale(2);opacity:0}50%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
 .msg-bar.watch{color:#00e5ff}
 .msg-bar.go{color:#00D9A5}
 .msg-bar.perfect{color:#ffd700}
@@ -183,6 +187,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 
 <div id="screen-game">
   <div id="fsStrobe"></div>
+  <div class="countdown-overlay" id="countdownOverlay"><div class="countdown-number" id="countdownNumber">3</div></div>
   <div class="topbar">
     <div class="top-box"><div class="top-label">Score</div><div class="top-val" id="hSc">0</div></div>
     <div class="top-box info-box"><div class="top-label">Tempo</div><div class="top-val" id="hFind">100 BPM</div></div>
@@ -479,13 +484,6 @@ function startRound(){
   $('actBtn').disabled=true;$('restartBtn').style.display='none';
   updateHUD();
   $('clockFill').style.width='100%';$('hPf').textContent='--';
-  if(pattern.length===0){
-    // The very first round of a new run — starts the clock here,
-    // not at launchGame(), since any time spent reading the intro
-    // screen or getting ready shouldn't count toward how fast the
-    // level was actually reached.
-    runStartTime=performance.now();
-  }
   if(gameMode==='training'){
     // Training plays at one fixed, selected level throughout — a
     // fresh pattern each round, same as before.
@@ -514,15 +512,43 @@ function startRound(){
       pattern.push(newCell);
     }
   }
-  msg('MEMORIZE!','watch');
-  timers.push(setTimeout(function(){
-    revealPattern(function(){
-      msg('⚡ RECALL NOW!','go');
-      phase='tapping';
-      startFullStrobe();
-      startRecallTimer();
-    });
-  },600));
+  // A real 3-2-1 count precedes only the very first round of a
+  // run — the jump straight from the preview's own "watch, tap"
+  // rhythm into real gameplay was genuinely confusing without one.
+  // Starts the clock right after the count, not before it, since
+  // watching the countdown shouldn't count toward how fast the
+  // level was actually reached.
+  var isFirstRound=(runStartTime===0);
+  function reallyStartRound(){
+    if(isFirstRound)runStartTime=performance.now();
+    msg('MEMORIZE!','watch');
+    timers.push(setTimeout(function(){
+      revealPattern(function(){
+        msg('⚡ RECALL NOW!','go');
+        phase='tapping';
+        startFullStrobe();
+        startRecallTimer();
+      });
+    },600));
+  }
+  if(isFirstRound){
+    showCountdownThen(reallyStartRound);
+  }else{
+    reallyStartRound();
+  }
+}
+function showCountdownThen(cb){
+  var overlay=$('countdownOverlay'),numEl=$('countdownNumber');
+  overlay.classList.add('show');
+  var n=3;numEl.textContent=n;
+  var iv=setInterval(function(){
+    n--;
+    if(n<=0){clearInterval(iv);overlay.classList.remove('show');cb()}
+    else{
+      numEl.textContent=n;
+      numEl.style.animation='none';void numEl.offsetWidth;numEl.style.animation='countdownPop .8s ease-out';
+    }
+  },800);
 }
 
 var tapLocked=false;
