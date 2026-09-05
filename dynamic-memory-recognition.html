@@ -515,14 +515,14 @@ function runPreviewRound(){
     if(i>0)cellSt(pOriginal[i-1]);
     if(i<pOriginal.length){
       cellSt(pOriginal[i],'rcg-lit',i+1);i++;
-      var t=setTimeout(watchNext,500);previewTimers.push(t);
+      var t=setTimeout(watchNext,900);previewTimers.push(t);
     }else{
       var t=setTimeout(function(){
         if(!previewActive)return;
         cellSt(pOriginal[pOriginal.length-1]);
         msg('👁️ NOW THE ECHO','rcg-echo');
         j=0;echoNext();
-      },300);previewTimers.push(t);
+      },600);previewTimers.push(t);
     }
   }
   var j=0;
@@ -531,22 +531,29 @@ function runPreviewRound(){
     if(j>0)cellSt(pEcho[j-1]);
     if(j<pEcho.length){
       cellSt(pEcho[j],'rcg-echo-lit',j+1);j++;
-      var t=setTimeout(echoNext,500);previewTimers.push(t);
+      var t=setTimeout(echoNext,900);previewTimers.push(t);
     }else{
       var t=setTimeout(function(){
         if(!previewActive)return;
         cellSt(pEcho[pEcho.length-1]);
-        msg('👁️ THIS ONE CHANGED','rcg-perfect');
-        cellSt(pChangedCell,'rcg-correct',pChangePos+1);
-        var t2=setTimeout(function(){
+        // A genuine hint beat — names the mechanic, gives the player
+        // a real pause to actually try spotting the change
+        // themselves, before the answer ever gets revealed at all.
+        msg('👁️ ONE SPOT CHANGED — CAN YOU SPOT IT?','rcg-echo');
+        var tHint=setTimeout(function(){
           if(!previewActive)return;
-          resetCells();
-          runPreviewRound();
-        },1800);previewTimers.push(t2);
-      },300);previewTimers.push(t);
+          msg('👁️ THIS ONE CHANGED','rcg-perfect');
+          cellSt(pChangedCell,'rcg-correct',pChangePos+1);
+          var t2=setTimeout(function(){
+            if(!previewActive)return;
+            resetCells();
+            runPreviewRound();
+          },2800);previewTimers.push(t2);
+        },2000);previewTimers.push(tHint);
+      },600);previewTimers.push(t);
     }
   }
-  var t0=setTimeout(watchNext,600);previewTimers.push(t0);
+  var t0=setTimeout(watchNext,1000);previewTimers.push(t0);
 }
 
 function revealWatchEcho(){
