@@ -123,7 +123,10 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .msg-bar.miss{color:#FF1493}
 .stars{text-align:center;padding:2px 0 4px;flex-shrink:0}
 .court-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;min-height:0;position:relative}
-.preview-watermark{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:1rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);background:rgba(0,0,0,.6);padding:8px 24px;border-radius:24px;pointer-events:none;z-index:5;display:none}
+.preview-watermark{position:absolute;top:52px;left:50%;transform:translateX(-50%);font-size:1rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);background:rgba(0,0,0,.6);padding:8px 24px;border-radius:24px;pointer-events:none;z-index:5;display:none}
+.preview-htp-label{position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:1.1rem;font-weight:900;letter-spacing:.15em;text-transform:uppercase;color:#FF6B35;text-shadow:0 0 12px rgba(255,107,53,.8);pointer-events:none;z-index:6;display:none;animation:htpStrobe 1s ease-in-out infinite;white-space:nowrap}
+.preview-htp-label.show{display:block}
+@keyframes htpStrobe{0%,100%{opacity:1}50%{opacity:.25}}
 .preview-watermark.show{display:block}
 .start-btn.preview-pulse{animation:previewPulse 1.3s ease-in-out infinite}
 @keyframes previewPulse{0%,100%{box-shadow:0 0 18px rgba(255,107,53,.7)}50%{box-shadow:0 0 32px rgba(255,107,53,1),0 0 50px rgba(255,107,53,.6)}}
@@ -199,7 +202,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <div class="clockbar"><div class="clockbar-fill" id="clockFill" style="width:0%"></div></div>
   <div class="msg-bar watch" id="msg">TAP LET'S GO!</div>
   <div class="stars"><span style="font-size:.65rem;color:#8892a0;letter-spacing:.1em;text-transform:uppercase">Sequence Length</span>&nbsp;<span id="ps1" style="font-size:1.2rem;font-weight:900;color:#FF6B35"></span></div>
-  <div class="court-area"><div class="preview-watermark" id="previewWatermark">Preview</div><div class="court" id="court"></div></div>
+  <div class="court-area"><div class="preview-htp-label" id="previewHtpLabel">How To Play</div><div class="preview-watermark" id="previewWatermark">Preview</div><div class="court" id="court"></div></div>
   <div class="bottombar">
     <button class="bot-btn" id="menuBtn">← Home<span>Settings</span></button>
     <button class="bot-btn start-btn" id="actBtn">LET'S GO</button>
@@ -418,11 +421,13 @@ function stopPreviewLoop(){
   previewTimers=[];
   resetCells();
   $('previewWatermark').classList.remove('show');
+  $('previewHtpLabel').classList.remove('show');
   $('actBtn').classList.remove('preview-pulse');
 }
 function startPreviewLoop(){
   previewActive=true;
   $('previewWatermark').classList.add('show');
+  $('previewHtpLabel').classList.add('show');
   $('actBtn').classList.add('preview-pulse');
   runPreviewRound();
 }
