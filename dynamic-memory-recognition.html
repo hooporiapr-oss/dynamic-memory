@@ -377,6 +377,7 @@ function launchGame(nm){
   g.cellCount=getInitialCellCount();g.roundsDone=0;
   buildCourt();updateHUD();
   resizeCourtToFit();
+  startPreviewLoop();
   try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
 }
 $('recog_startBtn').onclick=function(){
@@ -474,6 +475,80 @@ function genPatterns(){
   echo[changePos]=changedNewCell;changedCell=changedNewCell;
 }
 
+// A live preview, playing directly on the real court itself, right
+// on the game screen, for as long as the player hasn't tapped "Let's
+// Go" yet — the same visual language as actual gameplay (cellSt,
+// the same lit/echo/correct states), not a separate demo court, so
+// what they see here is genuinely what they're about to do. A
+// completely separate, self-contained loop from the real game state
+// (its own original/echo/changePos, its own timers) so it can never
+// interfere with an actual run, and gets torn down the instant one
+// truly starts.
+var previewTimers=[];
+var previewActive=false;
+function stopPreviewLoop(){
+  previewActive=false;
+  previewTimers.forEach(function(id){clearTimeout(id)});
+  previewTimers=[];
+  resetCells();
+}
+function startPreviewLoop(){
+  previewActive=true;
+  runPreviewRound();
+}
+function runPreviewRound(){
+  if(!previewActive)return;
+  resetCells();
+  var pOriginal=shuffle(Array.from({length:50},(_,i)=>i)).slice(0,2);
+  var pChangePos=Math.floor(Math.random()*2);
+  var pEcho=pOriginal.slice();
+  var pNewCell;
+  do{pNewCell=Math.floor(Math.random()*50)}while(pOriginal.indexOf(pNewCell)!==-1);
+  pEcho[pChangePos]=pNewCell;
+  var pOriginalCell=pOriginal[pChangePos];
+  var pChangedCell=pNewCell;
+
+  msg('👁️ WATCH ORIGINAL','rcg-watch');
+  var i=0;
+  function watchNext(){
+    if(!previewActive)return;
+    if(i>0)cellSt(pOriginal[i-1]);
+    if(i<pOriginal.length){
+      cellSt(pOriginal[i],'rcg-lit',i+1);i++;
+      var t=setTimeout(watchNext,500);previewTimers.push(t);
+    }else{
+      var t=setTimeout(function(){
+        if(!previewActive)return;
+        cellSt(pOriginal[pOriginal.length-1]);
+        msg('👁️ NOW THE ECHO','rcg-echo');
+        j=0;echoNext();
+      },300);previewTimers.push(t);
+    }
+  }
+  var j=0;
+  function echoNext(){
+    if(!previewActive)return;
+    if(j>0)cellSt(pEcho[j-1]);
+    if(j<pEcho.length){
+      cellSt(pEcho[j],'rcg-echo-lit',j+1);j++;
+      var t=setTimeout(echoNext,500);previewTimers.push(t);
+    }else{
+      var t=setTimeout(function(){
+        if(!previewActive)return;
+        cellSt(pEcho[pEcho.length-1]);
+        msg('👁️ THIS ONE CHANGED','rcg-perfect');
+        cellSt(pChangedCell,'rcg-correct',pChangePos+1);
+        var t2=setTimeout(function(){
+          if(!previewActive)return;
+          resetCells();
+          runPreviewRound();
+        },1800);previewTimers.push(t2);
+      },300);previewTimers.push(t);
+    }
+  }
+  var t0=setTimeout(watchNext,600);previewTimers.push(t0);
+}
+
 function revealWatchEcho(){
   phase='watching';resetCells();
   msg('WATCH ORIGINAL','rcg-watch');
@@ -497,6 +572,7 @@ function handleFailure(wrongIdx){
 
 function startRound(){
   if(phase!=='idle')return;
+  stopPreviewLoop();
   clrT();canTap=false;stopTimer();stopFullStrobe();firstTapDone=false;attemptNum=0;repeatOfferNum=0;
   if(original.length===0){
     // The very first round of a new run — starts the clock here,
