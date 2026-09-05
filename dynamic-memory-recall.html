@@ -118,7 +118,11 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 .msg-bar.perfect{color:#ffd700}
 .msg-bar.miss{color:#FF1493}
 .stars{text-align:center;padding:2px 0 4px;flex-shrink:0}
-.court-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;min-height:0}
+.court-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;min-height:0;position:relative}
+.preview-watermark{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:.62rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.35);background:rgba(0,0,0,.5);padding:4px 14px;border-radius:20px;pointer-events:none;z-index:5;display:none}
+.preview-watermark.show{display:block}
+.start-btn.preview-pulse{animation:previewPulse 1.3s ease-in-out infinite}
+@keyframes previewPulse{0%,100%{box-shadow:0 0 18px rgba(255,107,53,.7)}50%{box-shadow:0 0 32px rgba(255,107,53,1),0 0 50px rgba(255,107,53,.6)}}
 .court{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(5,1fr);gap:6px;width:100%;height:100%;border:2px solid rgba(255,149,0,.4);border-radius:14px;padding:6px;background-color:#2b1810;background-image:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20200%20100%22%3E%0A%20%20%3Crect%20width%3D%22200%22%20height%3D%22100%22%20fill%3D%22%233a1c0b%22/%3E%0A%20%20%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%22198%22%20height%3D%2298%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cline%20x1%3D%221%22%20y1%3D%221%22%20x2%3D%221%22%20y2%3D%2299%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.55%29%22%20stroke-width%3D%222.5%22/%3E%0A%20%20%3Cpath%20d%3D%22M%20199%2C10%20A%2062%2C62%200%200%201%20199%2C90%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Crect%20x%3D%221%22%20y%3D%2220%22%20width%3D%22100%22%20height%3D%2260%22%20fill%3D%22rgba%28255%2C107%2C0%2C.08%29%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%22101%22%20cy%3D%2250%22%20r%3D%2220%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%2216%22%20cy%3D%2250%22%20r%3D%228%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.5%29%22%20stroke-width%3D%221.5%22/%3E%0A%3C/svg%3E%0A');background-size:100% 100%;box-shadow:0 0 60px rgba(255,149,0,.25),inset 0 0 40px rgba(255,149,0,.05),0 20px 60px rgba(0,0,0,.8)}
 .cell{border-radius:8px;background:rgba(255,149,0,.05);border:2px solid rgba(255,149,0,.28);display:flex;align-items:center;justify-content:center;font-size:clamp(1.4rem,3vw,3rem);font-weight:900;color:transparent;cursor:pointer;transition:all .08s;touch-action:manipulation}
 .cell:hover{background:rgba(255,107,53,.2);border-color:#FF6B35;transform:scale(1.05)}
@@ -190,7 +194,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
   <div class="clockbar"><div class="clockbar-fill" id="clockFill" style="width:0%"></div></div>
   <div class="msg-bar watch" id="msg">TAP LET'S GO!</div>
   <div class="stars"><span style="font-size:.65rem;color:#8892a0;letter-spacing:.1em;text-transform:uppercase">Sequence Length</span>&nbsp;<span id="ps1" style="font-size:1.2rem;font-weight:900;color:#FF6B35"></span></div>
-  <div class="court-area"><div class="court" id="court"></div></div>
+  <div class="court-area"><div class="preview-watermark" id="previewWatermark">Preview</div><div class="court" id="court"></div></div>
   <div class="bottombar">
     <button class="bot-btn" id="menuBtn">← Home<span>Settings</span></button>
     <button class="bot-btn start-btn" id="actBtn">LET'S GO</button>
@@ -408,15 +412,19 @@ function stopPreviewLoop(){
   previewTimers.forEach(function(id){clearTimeout(id)});
   previewTimers=[];
   resetCells();
+  $('previewWatermark').classList.remove('show');
+  $('actBtn').classList.remove('preview-pulse');
 }
 function startPreviewLoop(){
   previewActive=true;
+  $('previewWatermark').classList.add('show');
+  $('actBtn').classList.add('preview-pulse');
   runPreviewRound();
 }
 function runPreviewRound(){
   if(!previewActive)return;
   resetCells();
-  msg('👁️ HOW TO PLAY','watch');
+  msg('👁️ HOW TO PLAY — TAP LET\'S GO TO BEGIN','watch');
   var demoPattern=shuffle(Array.from({length:50},(_,i)=>i)).slice(0,3);
   var t1=setTimeout(function(){
     if(!previewActive)return;
