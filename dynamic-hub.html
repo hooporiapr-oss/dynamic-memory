@@ -51,30 +51,6 @@ body{
   text-align:center;
 }
 
-.back-btn{
-  display:inline-block;
-  padding:10px 20px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.25);
-  background:rgba(0,0,0,.5);
-  color:#fff;
-  font-size:.78rem;
-  font-weight:900;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  text-decoration:none;
-  margin-bottom:20px;
-}
-.back-btn:active{transform:scale(.98)}
-
-.subtitle{
-  font-size:1.25rem;
-  font-weight:700;
-  color:#c9b8a8;
-  margin-bottom:24px;
-  letter-spacing:.03em;
-}
-
 .arena-title{
   font-size:1.6rem;
   font-weight:900;
@@ -91,13 +67,22 @@ body{
   letter-spacing:.24em;
   text-transform:uppercase;
   color:#7c3aed;
-  margin-bottom:18px;
+  margin-bottom:26px;
 }
+
+/* Section heading — the parts are genuinely different kinds of
+   training, so they are grouped rather than presented as one
+   undifferentiated grid of buttons. */
+.group-label{
+  font-size:.6rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+  color:#5c5468;margin:0 auto 10px;max-width:640px;text-align:left;padding-left:4px;
+}
+
 /* Individual quarter cards — standalone practice for any one of the
-   4 games. */
+   memory games. */
 .quarter-grid{
   display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
-  max-width:640px;margin:0 auto 22px;
+  max-width:640px;margin:0 auto 26px;
 }
 .quarter-card{
   display:block;text-decoration:none;padding:14px 12px;border-radius:14px;
@@ -114,12 +99,38 @@ body{
   text-transform:uppercase;color:#fff;margin-bottom:4px;line-height:1.1;
 }
 
+/* Ritnome is reaction training, not memory — its own card, in its
+   own color, so the difference reads at a glance. */
+.rit-card{
+  display:block;text-decoration:none;padding:16px 14px;border-radius:14px;
+  border:1.5px solid rgba(0,229,255,.4);background:rgba(0,229,255,.08);
+  text-align:left;max-width:640px;margin:0 auto 26px;
+  transition:background .12s,transform .08s;
+}
+.rit-card:active{transform:scale(.98);background:rgba(0,229,255,.16)}
+.rit-num{font-size:.62rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#00e5ff;margin-bottom:4px}
+.rit-name{font-size:.98rem;font-weight:900;font-style:italic;text-transform:uppercase;color:#fff;line-height:1.1}
+.rit-note{font-size:.68rem;color:#7d8ba3;margin-top:5px}
+
+/* Standings covers both products, so it sits on its own rather
+   than inside either group. */
+.standings-card{
+  display:block;text-decoration:none;padding:15px 14px;border-radius:14px;
+  border:1.5px solid rgba(255,211,90,.4);background:rgba(255,211,90,.07);
+  max-width:640px;margin:0 auto 6px;text-align:left;
+  transition:background .12s,transform .08s;
+}
+.standings-card:active{transform:scale(.98);background:rgba(255,211,90,.14)}
+.standings-name{font-size:.95rem;font-weight:900;font-style:italic;text-transform:uppercase;color:#fff}
+.standings-note{font-size:.68rem;color:#8a7d5f;margin-top:4px}
+
 footer{
   margin-top:24px;
   font-size:.72rem;
   color:#6b5d52;
   letter-spacing:.02em;
 }
+.school-tag{font-size:.68rem;color:#5c5468;margin-top:6px;letter-spacing:.04em}
 
 #soundToggle{
   position:fixed;top:14px;right:14px;z-index:30;width:42px;height:42px;border-radius:50%;
@@ -131,40 +142,24 @@ footer{
   border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:.78rem;
   font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;backdrop-filter:blur(4px);
 }
-
-/* Switch Program — moved out of the inline panel and up to a fixed
-   corner button, matching Reaction Velocity's own placement and
-   label exactly, so the same action reads the same way on both
-   products. Session-clearing logic underneath is unchanged. */
 #switchProgramBtn{
   position:fixed;top:56px;left:14px;z-index:30;padding:8px 14px;border-radius:999px;
   border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:.72rem;
   font-weight:900;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(4px);
-}
-
-/* Ritnome — a direct link across to the platform's sibling
-   product. Right corner, below the sound toggle — separate from
-   Exit on the left, since this is a cross-product link, not a
-   same-product session action. */
-#ritnomeTab{
-  position:fixed;top:66px;right:14px;z-index:30;padding:8px 14px;border-radius:999px;
-  border:1px solid rgba(255,107,53,.5);background:rgba(255,107,53,.15);color:#fff;font-size:.72rem;
-  font-weight:900;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(4px);text-decoration:none;
-  display:inline-block;
 }
 </style>
 </head>
 <body>
 <button id="soundToggle" aria-label="Toggle sound" title="Toggle beat sound">🔊</button>
 <button id="exitHubBtn" type="button">Exit →</button>
-<button id="switchProgramBtn" type="button">🔄 Switch Program</button>
-<a id="ritnomeTab" href="https://ritnome.com">🏀 Ritnome</a>
+<button id="switchProgramBtn" type="button">🔄 Switch Code</button>
 
 <div id="stage">
   <div id="panel">
     <div class="arena-title">DYNAMIC <span>MEMORY</span></div>
-    <div class="arena-sub">Memory-Based Basketball Challenges</div>
+    <div class="arena-sub">Memory &amp; Reaction Basketball Training</div>
 
+    <div class="group-label">Memory</div>
     <div class="quarter-grid">
       <a class="quarter-card" href="dynamic-memory-the-fortress.html">
         <div class="quarter-num">Q1</div>
@@ -180,11 +175,19 @@ footer{
       </a>
       <a class="quarter-card" href="dynamic-memory-standings.html">
         <div class="quarter-num">🏆</div>
-        <div class="quarter-name">View Standings</div>
+        <div class="quarter-name">Memory Standings</div>
       </a>
     </div>
 
+    <div class="group-label">Reaction</div>
+    <a class="rit-card" href="ritnome.html">
+      <div class="rit-num">🏀 Ritnome</div>
+      <div class="rit-name">Go No Go &amp; Reaction Speed</div>
+      <div class="rit-note">Tap on the beat. Included with your access.</div>
+    </a>
+
     <footer>Gostar Digital LLC</footer>
+    <div class="school-tag" id="schoolTag"></div>
   </div>
 </div>
 
@@ -200,25 +203,36 @@ soundBtn.addEventListener('click',function(e){
   soundBtn.style.opacity=muted?'.55':'1';
 });
 
-// Exits the product entirely — clears the gate pass so the next
-// visit genuinely requires the access code again, rather than
-// silently letting a stale session back in.
+// Shows whose access this is — useful on a shared classroom device
+// where the last person's code may still be the one in session.
+var school=sessionStorage.getItem('hoop-school');
+if(school){ document.getElementById('schoolTag').textContent=school; }
+
+// Exits the product entirely — clears every pass so the next visit
+// genuinely requires the access code again, rather than silently
+// letting a stale session back in. All parts are cleared together,
+// since one code opened all of them.
+function clearAccess(){
+  ['dynamic-memory-gate-pass','dynamic-memory-standings-gate-pass',
+   'ritnome-gate-pass','ritnome-standings-gate-pass',
+   'hoop-license','ritnome-license',
+   'hoop-school','ritnome-school'].forEach(function(k){
+    sessionStorage.removeItem(k);
+  });
+}
+
 document.getElementById('exitHubBtn').addEventListener('click',function(){
-  sessionStorage.removeItem('dynamic-memory-gate-pass');
+  clearAccess();
   window.location.href='index.html';
 });
 
-// The device unlock is otherwise permanent by design (enter a code
-// once, never asked again) — this is the one, visible way to
-// deliberately back out of that and enter a different code, without
-// needing any browser/settings knowledge at all. A confirm dialog
-// guards against an accidental tap locking someone out of the game
-// with no new code in hand yet.
+// The one visible way to deliberately back out and enter a different
+// code, without needing any browser or settings knowledge at all. A
+// confirm dialog guards against an accidental tap locking someone
+// out of the game with no new code in hand yet.
 document.getElementById('switchProgramBtn').addEventListener('click',function(){
   if(!confirm('Switch to a new school or code? You\'ll need a new access code to get back in.'))return;
-  sessionStorage.removeItem('dynamic-memory-gate-pass');
-  sessionStorage.removeItem('hoop-license');
-  sessionStorage.removeItem('hoop-school');
+  clearAccess();
   window.location.href='index.html';
 });
 })();
