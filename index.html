@@ -15,7 +15,9 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--dark);col
 
 .gate-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:.03em;text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(124,58,237,.5)}
 .gate-title span{color:var(--purple)}
-.gate-sub{font-size:.85rem;color:var(--muted);margin-bottom:40px}
+.gate-sub{font-size:.85rem;color:var(--muted);margin-bottom:14px}
+.gate-parts{font-size:.68rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#5c5468;margin-bottom:38px}
+.gate-parts b{color:var(--orange);font-weight:900}
 
 .code-panel{width:100%;max-width:340px}
 .code-label{font-size:.68rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
@@ -39,12 +41,13 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--dark);col
 
 <div id="center">
   <div class="gate-title">DYNAMIC <span>MEMORY</span></div>
-  <div class="gate-sub">Memory-Based Basketball Challenges</div>
+  <div class="gate-sub">Memory & Reaction Basketball Training</div>
+  <div class="gate-parts">Memory Games · <b>Ritnome</b> · Standings</div>
 
   <div class="code-panel">
     <div class="code-label">Access Code</div>
     <input class="code-input" id="gate-code" maxlength="12" placeholder="• • • •" autocomplete="off" onkeydown="if(event.key==='Enter')tryEnter()">
-    <button class="enter-btn" id="gate-btn" onclick="tryEnter()">Enter Dynamic Memory →</button>
+    <button class="enter-btn" id="gate-btn" onclick="tryEnter()">Enter →</button>
     <div class="err" id="gate-err"></div>
   </div>
 
@@ -55,30 +58,31 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--dark);col
 var $=function(id){return document.getElementById(id)};
 
 // ══════════════════════════════════════════════════════
-//  LICENSE SYSTEM — this is its own separate repo, distinct
-//  from every other product's own domain. To issue / expire /
-//  revoke codes, use admin.html → the Dynamic Memory tab.
+//  LICENSE SYSTEM — one code, one product, three parts.
 //
-//  This gate is scoped to product='hooporia' — a code issued
-//  for any other product will NOT unlock this gate, and a
-//  Dynamic Memory code won't unlock those, even though all of
-//  them live in the same Supabase licenses table.
+//  This is the single front door for everything on this site:
+//  the memory games, Ritnome, and both standings boards. There
+//  are no other gates. A code good for product='hooporia'
+//  unlocks all of it, because it is all one product now.
+//
+//  To issue / expire / revoke codes, use admin.html. Codes also
+//  arrive automatically from purchases made through Basketball
+//  Money, which writes them into the same licenses table.
 //
 //  The licenses table is NOT readable from the browser. This
-//  page asks the database a single question through the
-//  check_license function — "is this code good for this
-//  product?" — and gets back only a yes or no plus the school
-//  name. Nobody can list the codes, because nothing here can
-//  read the table.
+//  page asks the database one question through the check_license
+//  function — "is this code good for this product?" — and gets
+//  back only a yes or no plus the school name. Nobody can list
+//  the codes, because nothing here can read the table. Expiry is
+//  judged inside that function, on the database's own clock, so
+//  an expired code cannot be waved through by editing this page
+//  or changing a device's date.
 //
-//  Expiry is judged inside that function, on the database's
-//  own clock, so an expired code cannot be waved through by
-//  editing this page or changing a device's date.
-//
-//  The school name captured here travels with the player from
-//  this point forward via sessionStorage — every game they play
-//  and the standings board itself both read it back from here,
-//  rather than each needing its own separate login of its own.
+//  The school name is written to BOTH 'hoop-school' and
+//  'ritnome-school'. Each part's standings board reads its own
+//  key, and both need the same answer — that is what keeps one
+//  school's board separate from another's now that a single code
+//  opens every board.
 // ══════════════════════════════════════════════════════
 var SUPABASE_URL = 'https://sdaphocueugzfvjovuxd.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
@@ -120,9 +124,23 @@ function tryEnter(){
       return reject('Invalid or expired code — check with your administrator');
     }
 
+    var code = input.toUpperCase();
+    var school = lic.school_name || '';
+
+    // One code opens every part. Each part still checks its own
+    // pass key, so they are all set here rather than each part
+    // asking for a code of its own.
     sessionStorage.setItem('dynamic-memory-gate-pass','1');
-    sessionStorage.setItem('hoop-license', input.toUpperCase());
-    sessionStorage.setItem('hoop-school', lic.school_name || '');
+    sessionStorage.setItem('dynamic-memory-standings-gate-pass','1');
+    sessionStorage.setItem('ritnome-gate-pass','1');
+    sessionStorage.setItem('ritnome-standings-gate-pass','1');
+
+    sessionStorage.setItem('hoop-license', code);
+    sessionStorage.setItem('ritnome-license', code);
+
+    sessionStorage.setItem('hoop-school', school);
+    sessionStorage.setItem('ritnome-school', school);
+
     window.location.href = 'dynamic-hub.html';
   })
   .catch(function(){
