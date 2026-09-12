@@ -29,7 +29,7 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--dark);col
 .enter-btn{width:100%;margin-top:16px;padding:15px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--purple),var(--purple-deep));color:#fff;font-size:.9rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .enter-btn:active{transform:scale(.98)}
 .enter-btn:disabled{opacity:.6;cursor:default}
-.err{margin-top:14px;color:#ff8888;font-size:.82rem;font-weight:700;min-height:18px}
+.err{margin-top:14px;color:#ff8888;font-size:.82rem;font-weight:700;min-height:18px;line-height:1.45}
 
 .brandmark{margin-top:44px;font-size:.68rem;font-weight:900;letter-spacing:.3em;text-transform:uppercase;color:#4a5058}
 .brandmark b{color:var(--muted);font-style:italic}
@@ -78,6 +78,13 @@ var $=function(id){return document.getElementById(id)};
 //  an expired code cannot be waved through by editing this page
 //  or changing a device's date.
 //
+//  DEVICE LIMIT — a sold code works on a set number of devices,
+//  five by default. Codes created by hand in the license admin are
+//  unlimited, since those are used to recruit schools and run free
+//  trials. The count is kept and enforced by the database, not here,
+//  so it cannot be sidestepped by editing this page. A device already
+//  known is always let back in; only a new one can be refused.
+//
 //  The school name is written to BOTH 'hoop-school' and
 //  'ritnome-school'. Each part's standings board reads its own
 //  key, and both need the same answer — that is what keeps one
@@ -88,6 +95,21 @@ var SUPABASE_URL = 'https://sdaphocueugzfvjovuxd.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
 var PRODUCT = 'hooporia';
 // ══════════════════════════════════════════════════════
+
+// A stable random id for this browser, kept in localStorage so it
+// survives between visits. It identifies nothing about the person or
+// the machine — it only lets the database tell one browser from
+// another. Clearing site data makes a new one and costs a slot,
+// which is why admin can reset a code's devices.
+function deviceId(){
+  var id = null;
+  try { id = localStorage.getItem('gostar-device-id'); } catch(e){}
+  if (!id){
+    id = 'd-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    try { localStorage.setItem('gostar-device-id', id); } catch(e){}
+  }
+  return id;
+}
 
 if (sessionStorage.getItem('dynamic-memory-gate-pass') === '1') {
   window.location.replace('dynamic-hub.html');
@@ -106,14 +128,14 @@ function tryEnter(){
   $('gate-err').style.color = '';
   $('gate-err').textContent = 'Checking…';
 
-  fetch(SUPABASE_URL + '/rest/v1/rpc/check_license', {
+  fetch(SUPABASE_URL + '/rest/v1/rpc/check_access', {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
       'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ p_code: input, p_product: PRODUCT })
+    body: JSON.stringify({ p_code: input, p_product: PRODUCT, p_device: deviceId() })
   })
   .then(function(r){
     if (!r.ok) throw new Error('lookup failed');
@@ -121,7 +143,20 @@ function tryEnter(){
   })
   .then(function(lic){
     if (!lic || !lic.ok){
-      return reject('Invalid or expired code — check with your administrator');
+      // Each refusal says what actually happened. "Invalid code" for a
+      // code that is real but out of device slots would send someone
+      // hunting for a typo that is not there.
+      if (lic && lic.reason === 'devices'){
+        return reject('This code is already in use on ' + (lic.max_devices || 5) +
+                      ' devices. Ask your administrator to reset it.');
+      }
+      if (lic && lic.reason === 'expired'){
+        return reject('This access has expired — contact your administrator to renew.');
+      }
+      if (lic && lic.reason === 'revoked'){
+        return reject('This code is no longer active.');
+      }
+      return reject('Invalid code — check with your administrator');
     }
 
     var code = input.toUpperCase();
